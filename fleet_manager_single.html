@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet Fuel Manager</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='11' fill='%2322d3ee'/%3E%3Cpath d='M9 33A16 16 0 1 1 39 33' fill='none' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M24 12C24 12 17 20.5 17 25.5A7 7 0 0 0 31 25.5C31 20.5 24 12 24 12Z' fill='%2304121f'/%3E%3Cline x1='24' y1='36' x2='33' y2='25' stroke='%23fbbf24' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Fleet Fuel Manager - dark "telemetry" theme. Colours are variables at the top: change them to re-theme the whole app. */
+:root {
+  color-scheme: dark;
+  --bg: #070b14;
+  --bg2: #0b1220;
+  --card: #0f172a;
+  --card2: #131d33;
+  --ink: #e2e8f0;
+  --muted: #94a3b8;
+  --line: #1e2a44;
+  --cyan: #22d3ee;
+  --blue: #3b82f6;
+  --head1: #0b1f3a;
+  --head2: #0e3a5f;
+  --accent: #fbbf24;
+  --bar: #38a8e8;
+  --best: #34d399;
+  --worst: #fb923c;
+  --fuel: #22d3ee;
+  --maint: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, .12);
+  --warn-ink: #fcd34d;
+  --bad-bg: rgba(244, 63, 94, .13);
+  --bad-ink: #fda4af;
+  --good-bg: rgba(52, 211, 153, .13);
+  --good-ink: #6ee7b7;
+  --info-bg: rgba(56, 189, 248, .13);
+  --info-ink: #7dd3fc;
+  --radius: 16px;
+  --wheel-w: 46px;
+  --wheel-h: 68px;
+  --digital: "Orbitron", "Consolas", "SF Mono", "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; color: var(--ink); min-height: 100vh;
+  background: radial-gradient(900px 420px at 15% -120px, rgba(34, 211, 238, .10), transparent 70%),
+              radial-gradient(800px 400px at 100% 0, rgba(59, 130, 246, .10), transparent 70%), var(--bg);
+  background-attachment: fixed;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums;
+}
+h1, h2 { margin: 0; line-height: 1.2; }
+h2 { font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+h2::before { content: ""; width: 4px; height: 17px; border-radius: 3px; background: linear-gradient(var(--cyan), var(--blue)); }
+.bar h2::before { display: none; }
+code { background: #1a2540; color: var(--cyan); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
+[hidden] { display: none !important; }
+::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-track { background: #0a1020; }
+::-webkit-scrollbar-thumb { background: #2b3a5c; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #3b4f7a; }
+
+/* ---------- header ---------- */
+.top { background: rgba(9, 16, 32, .86); backdrop-filter: blur(10px); color: #fff; padding: 12px 24px 0; position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 12px; padding-bottom: 10px; }
+.logo { background: linear-gradient(135deg, #22d3ee, #3b82f6 70%, #6366f1); width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset, 0 0 22px rgba(34, 211, 238, .55), 0 6px 18px rgba(59, 130, 246, .35); }
+.logo svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.brand h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: .6px; background: linear-gradient(90deg, #67e8f9, #7dd3fc, #60a5fa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand p { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+nav::-webkit-scrollbar { display: none; }
+.tab { font: inherit; font-weight: 600; font-size: .9rem; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 10px 16px; border-radius: 10px 10px 0 0; white-space: nowrap; border-bottom: 3px solid transparent; }
+.tab:hover { color: #fff; background: rgba(255,255,255,.05); }
+.tab.is-active { color: var(--cyan); border-bottom-color: var(--cyan); background: rgba(34, 211, 238, .08); }
+.tab:focus-visible, .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; }
+.view { display: grid; gap: 16px; animation: fade .3s ease both; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- cards, text ---------- */
+.card { background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); min-width: 0; }
+.sub { margin: 3px 0 12px; color: var(--muted); font-size: .86rem; }
+.hint { color: var(--muted); font-size: .86rem; margin: 0; }
+.period { margin: -6px 2px 0; color: var(--muted); font-size: .86rem; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 16px; }
+.stack { display: grid; gap: 10px; justify-items: start; }
+.how ul { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; color: #cbd5e1; }
+
+/* ---------- buttons and form controls ---------- */
+.btn { display: inline-block; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; border: 0; border-radius: 11px; padding: 10px 18px; color: #04121f; background: linear-gradient(90deg, #22d3ee, #3b82f6); box-shadow: 0 6px 18px rgba(34, 211, 238, .22); transition: transform .1s, filter .15s; }
+.btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn.ghost { background: rgba(148, 163, 184, .1); color: var(--ink); border: 1px solid #2b3a5c; box-shadow: none; }
+.btn.ghost:hover { background: rgba(148, 163, 184, .18); }
+.btn.danger { background: transparent; color: var(--bad-ink); border: 1px solid rgba(244, 63, 94, .35); box-shadow: none; }
+.btn.danger:hover { background: var(--bad-bg); }
+.btn.small { padding: 4px 11px; font-size: .8rem; border-radius: 8px; }
+input, select { font: inherit; color: var(--ink); background: #0a1020; width: 100%; padding: 9px 11px; border: 1px solid #2b3a5c; border-radius: 10px; transition: border-color .15s, box-shadow .15s; }
+input::placeholder { color: #55657f; }
+input:focus, select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(34, 211, 238, .2); }
+input[type=checkbox] { accent-color: var(--cyan); }
+label { display: grid; gap: 5px; font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+label small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+label.check { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: .9rem; font-weight: 600; color: var(--ink); }
+label.check input { width: auto; }
+.warn-text { color: var(--warn-ink); }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 14px; padding: 14px 16px; }
+.filters label { min-width: 140px; }
+.filters label.check { min-width: 0; padding-bottom: 9px; }
+.spacer { flex: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 200px; align-items: center; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; }
+.chip span { display: inline-block; padding: 6px 12px; border-radius: 999px; border: 1px solid #2b3a5c; background: #0a1020; font-size: .83rem; font-weight: 700; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.chip input:checked + span { background: rgba(34, 211, 238, .16); border-color: var(--cyan); color: var(--cyan); }
+.chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- KPI cards ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; }
+.kpi { background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .3); }
+.kpi::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 3px; background: var(--c, var(--cyan)); box-shadow: 0 0 14px var(--c, var(--cyan)); }
+.kpi:nth-child(1) { --c: var(--cyan); } .kpi:nth-child(2) { --c: var(--accent); } .kpi:nth-child(3) { --c: #a78bfa; }
+.kpi:nth-child(4) { --c: var(--best); } .kpi:nth-child(5) { --c: var(--worst); } .kpi:nth-child(6) { --c: #f472b6; }
+.kpi small { color: var(--muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.kpi b { display: block; font-family: var(--digital); font-size: 1.45rem; font-weight: 800; margin-top: 4px; color: var(--c, var(--cyan)); }
+.kpi i { font-style: normal; color: var(--muted); font-size: .78rem; }
+.kpis.small .kpi b { font-size: 1.15rem; }
+.spotlight { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.spot { border-radius: var(--radius); padding: 14px 16px; display: flex; gap: 12px; align-items: center; border: 1px solid transparent; }
+.spot .ico { font-size: 1.5rem; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 13px; background: rgba(255,255,255,.08); }
+.spot small { display: block; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; opacity: .9; }
+.spot b { font-size: 1.1rem; display: block; color: #fff; }
+.spot span { font-size: .85rem; }
+.spot.best { background: var(--good-bg); color: var(--good-ink); border-color: rgba(52, 211, 153, .3); }
+.spot.worst { background: rgba(251, 146, 60, .12); color: #fdba74; border-color: rgba(251, 146, 60, .3); }
+.spot.top { background: var(--info-bg); color: var(--info-ink); border-color: rgba(56, 189, 248, .3); }
+
+/* ---------- charts ---------- */
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid { stroke: #1b2740; stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .val { fill: #e2e8f0; font-size: 11px; font-weight: 700; text-anchor: middle; }
+.chart .xl { fill: #cbd5e1; font-size: 11.5px; font-weight: 600; text-anchor: middle; }
+.chart .bar-rect { transition: opacity .15s, filter .15s; } .chart .bar-rect:hover { opacity: .85; filter: brightness(1.2); }
+.chart .empty { fill: var(--muted); font-size: 13px; text-anchor: middle; }
+.chart circle { fill: var(--card) !important; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: .84rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* ---------- tables ---------- */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: rgba(5, 9, 18, .35); }
+.tablewrap.tall { max-height: 640px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .87rem; color: #cbd5e1; }
+th, td { padding: 9px 11px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th { position: sticky; top: 0; background: #0a1020; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; z-index: 1; }
+.l { text-align: left; }
+td b { color: #fff; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: rgba(34, 211, 238, .05); }
+tr.inactive td { color: #55657f; } tr.inactive td b { color: #6b7a96; }
+.muted { color: var(--muted); }
+.empty-note { padding: 28px 14px; text-align: center; color: var(--muted); }
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 800; border: 1px solid transparent; }
+.badge.ok { background: var(--good-bg); color: var(--good-ink); border-color: rgba(52, 211, 153, .25); }
+.badge.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: rgba(251, 191, 36, .25); }
+.badge.bad { background: var(--bad-bg); color: var(--bad-ink); border-color: rgba(244, 63, 94, .25); }
+.badge.info { background: var(--info-bg); color: var(--info-ink); border-color: rgba(56, 189, 248, .25); }
+.badge.mute { background: rgba(148, 163, 184, .12); color: var(--muted); }
+.acts { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* ---------- odometer and gauge ---------- */
+.odo-card { padding: 20px; }
+.odo-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; justify-content: space-between; }
+.odo-head label { min-width: 260px; }
+.odo-meta { color: var(--muted); font-size: .9rem; display: flex; gap: 8px 18px; flex-wrap: wrap; }
+.odo-meta b { color: #fff; }
+.odo-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 16px; }
+.odo-stage { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 30px 12px; border-radius: 18px; background: radial-gradient(520px 170px at 50% 0, rgba(34, 211, 238, .12), transparent 75%), #060a13; border: 1px solid var(--line); box-shadow: inset 0 2px 16px rgba(0,0,0,.7); }
+.odometer { display: inline-flex; gap: 5px; padding: 10px; border-radius: 12px; background: linear-gradient(#5d6c76, #2a343b 45%, #1b2227); box-shadow: 0 6px 16px rgba(0,0,0,.6), 0 0 28px rgba(34, 211, 238, .12), inset 0 1px 0 rgba(255,255,255,.25); }
+.digit { position: relative; width: var(--wheel-w); height: var(--wheel-h); overflow: hidden; border-radius: 7px; background: linear-gradient(#2a3239, #10151a 50%, #2a3239); box-shadow: inset 0 0 8px rgba(0,0,0,.85); }
+.digit.last { background: linear-gradient(#8b1d1d, #3f0a0a 50%, #8b1d1d); }
+.digit::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: 7px; background: linear-gradient(rgba(0,0,0,.6), transparent 30%, transparent 70%, rgba(0,0,0,.6)), linear-gradient(90deg, rgba(255,255,255,.09), transparent 25%, transparent 75%, rgba(0,0,0,.35)); }
+.strip { position: absolute; left: 0; top: 0; width: 100%; transition: transform 1.2s cubic-bezier(.22, .85, .28, 1); }
+.strip span { display: block; height: var(--wheel-h); line-height: var(--wheel-h); text-align: center; color: #f8fafc; font-size: calc(var(--wheel-h) * .6); font-weight: 700; font-family: var(--digital); text-shadow: 0 0 12px rgba(120, 220, 255, .55); }
+.unit { color: var(--cyan); font-weight: 800; letter-spacing: .1em; }
+.gauge-box { display: grid; place-items: center; padding: 8px; border-radius: 18px; border: 1px solid var(--line); background: radial-gradient(260px 200px at 50% 40%, rgba(251, 191, 36, .07), transparent 75%), #060a13; }
+.gauge { width: 100%; max-width: 280px; height: auto; }
+.gauge .track { fill: none; stroke: #1b2740; stroke-width: 14; stroke-linecap: round; }
+.gauge .fill { fill: none; stroke: url(#gArc); stroke-width: 14; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(34, 211, 238, .6)); transition: stroke-dasharray 1.2s cubic-bezier(.22, .85, .28, 1); }
+.gauge .needle { transform-origin: 150px 150px; transition: transform 1.2s cubic-bezier(.34, 1.4, .64, 1); }
+.gauge text { fill: var(--muted); font-size: 10px; font-family: var(--digital); text-anchor: middle; }
+.gauge .big { fill: var(--cyan); font-size: 24px; font-weight: 800; }
+.gauge .cap { fill: var(--muted); font-size: 9px; letter-spacing: .1em; }
+.odo-note { text-align: center; color: var(--muted); font-size: .88rem; margin: 12px 0 0; min-height: 1.3em; }
+.minis { display: grid; gap: 8px; }
+.mini { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #0a1020; cursor: pointer; font: inherit; text-align: left; color: inherit; }
+.mini:hover { border-color: var(--cyan); background: #0d1730; }
+.mini.is-on { border-color: var(--cyan); background: rgba(34, 211, 238, .1); }
+.mini b { display: block; color: #fff; } .mini span { color: var(--muted); font-size: .82rem; }
+.mini .km { font-family: var(--digital); font-weight: 700; font-size: .95rem; background: #03060d; color: var(--cyan); padding: 5px 10px; border-radius: 7px; letter-spacing: 1.5px; border: 1px solid rgba(34, 211, 238, .25); text-shadow: 0 0 8px rgba(34, 211, 238, .6); }
+
+/* ---------- dialogs ---------- */
+dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; width: min(580px, calc(100vw - 24px)); max-height: calc(100vh - 24px); box-shadow: 0 30px 80px rgba(0, 0, 0, .7); color: var(--ink); background: var(--card); }
+dialog::backdrop { background: rgba(2, 6, 14, .72); backdrop-filter: blur(3px); }
+dialog form { padding: 20px; display: grid; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fields .wide { grid-column: 1 / -1; }
+.calc { background: #0a1020; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: .9rem; min-height: 2.6em; color: var(--muted); }
+.calc b { font-family: var(--digital); font-size: 1.05rem; color: var(--cyan); }
+.hintline { margin: -6px 0 0; color: var(--muted); font-size: .84rem; }
+.confirm { background: var(--warn-bg); border: 1px solid rgba(251, 191, 36, .3); border-radius: 12px; padding: 10px 12px; color: var(--warn-ink); }
+.msgbox:not(:empty) { padding: 10px 12px; border-radius: 12px; font-size: .9rem; background: var(--bad-bg); color: var(--bad-ink); border: 1px solid rgba(244, 63, 94, .3); }
+.msgbox.warn:not(:empty) { background: var(--warn-bg); color: var(--warn-ink); border-color: rgba(251, 191, 36, .3); }
+.msgbox.ok:not(:empty) { background: var(--good-bg); color: var(--good-ink); border-color: rgba(52, 211, 153, .3); }
+#restoreMsg { margin-top: 10px; font-size: .9rem; }
+#restoreMsg:not(:empty) { padding: 10px 12px; border-radius: 12px; background: var(--good-bg); color: var(--good-ink); }
+#restoreMsg.bad:not(:empty) { background: var(--bad-bg); color: var(--bad-ink); }
+.actions { display: flex; justify-content: flex-end; gap: 10px; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 30px); background: #0b1d33; color: #e2f6ff; border: 1px solid rgba(34, 211, 238, .4); padding: 11px 18px; border-radius: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: .25s; z-index: 50; max-width: calc(100vw - 32px); box-shadow: 0 14px 40px rgba(0,0,0,.6); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.err { background: #2a0f1a; border-color: rgba(244, 63, 94, .5); color: var(--bad-ink); }
+
+@media (max-width: 760px) { .odo-body { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .top { padding: 12px 12px 0; }
+  main { padding: 14px 10px 50px; }
+  .fields { grid-template-columns: 1fr; }
+  :root { --wheel-w: 36px; --wheel-h: 56px; }
+  .odo-stage { padding: 22px 6px; } .odometer { gap: 3px; padding: 7px; }
+  .odo-head label { min-width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .view { animation: none; } .strip, .gauge .needle, .gauge .fill { transition: none; } .btn { transition: none; } }
+@media print { .top, .filters, .btn, dialog { display: none !important; } body { background: #fff; color: #000; } }
+
+.empty-banner { border-color: rgba(251, 191, 36, .45); background: var(--warn-bg); }
+.empty-banner .sub { color: var(--warn-ink); }
+
+/* ---------- glow on cards ---------- */
+.card { box-shadow: 0 0 0 1px rgba(34, 211, 238, .07), 0 0 26px rgba(34, 211, 238, .09), 0 10px 30px rgba(0, 0, 0, .35); transition: box-shadow .25s, border-color .25s; }
+.card:hover { border-color: rgba(34, 211, 238, .35); box-shadow: 0 0 0 1px rgba(34, 211, 238, .18), 0 0 34px rgba(34, 211, 238, .2), 0 10px 30px rgba(0, 0, 0, .4); }
+.kpi { box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 22%, transparent), 0 0 24px color-mix(in srgb, var(--c) 22%, transparent), 0 8px 24px rgba(0, 0, 0, .3); transition: box-shadow .25s, transform .25s, border-color .25s; }
+.kpi:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--c) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent), 0 0 38px color-mix(in srgb, var(--c) 42%, transparent), 0 10px 28px rgba(0, 0, 0, .35); }
+.kpi b { text-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
+.spot { transition: box-shadow .25s, transform .25s; }
+.spot.best { box-shadow: 0 0 26px rgba(52, 211, 153, .22); } .spot.worst { box-shadow: 0 0 26px rgba(251, 146, 60, .22); } .spot.top { box-shadow: 0 0 26px rgba(56, 189, 248, .22); }
+.spot:hover { transform: translateY(-2px); }
+.spot.best:hover { box-shadow: 0 0 40px rgba(52, 211, 153, .4); } .spot.worst:hover { box-shadow: 0 0 40px rgba(251, 146, 60, .4); } .spot.top:hover { box-shadow: 0 0 40px rgba(56, 189, 248, .4); }
+.odo-stage, .gauge-box { box-shadow: inset 0 2px 16px rgba(0, 0, 0, .7), 0 0 30px rgba(34, 211, 238, .12); }
+.mini.is-on { box-shadow: 0 0 18px rgba(34, 211, 238, .25); }
+.empty-banner { box-shadow: 0 0 28px rgba(251, 191, 36, .2); }
+@media (prefers-reduced-motion: reduce) { .kpi:hover, .spot:hover { transform: none; } }
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="38" height="38">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#bff3ff"/></linearGradient></defs>
+        <path d="M9 33 A16 16 0 1 1 39 33" fill="none" stroke="url(#lg)" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+        <path d="M24 12 C24 12 17 20.5 17 25.5 A7 7 0 0 0 31 25.5 C31 20.5 24 12 24 12 Z" fill="#04121f"/>
+        <path d="M22 26 A2.8 2.8 0 0 0 25 28.6" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="24" y1="36" x2="33" y2="25" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="24" cy="36" r="2.6" fill="#fbbf24"/>
+      </svg>
+    </span>
+    <div><h1>Fleet Fuel Manager</h1><p>Refuelling, odometer and running costs</p></div>
+  </div>
+  <nav aria-label="Main">
+    <button class="tab is-active" data-view="dashboard">Dashboard</button>
+    <button class="tab" data-view="odometer">Odometer</button>
+    <button class="tab" data-view="fuel">Fuel log</button>
+    <button class="tab" data-view="vehicles">Vehicles</button>
+    <button class="tab" data-view="maintenance">Maintenance</button>
+    <button class="tab" data-view="data">Data &amp; export</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ================= DASHBOARD ================= -->
+  <section id="view-dashboard" class="view">
+    <div class="card empty-banner" id="emptyBanner" hidden>
+      <h2>No data yet</h2>
+      <p class="sub">The app is empty. Load the demo data (6 vehicles, 72 refuellings) or start adding your own on the Vehicles tab.</p>
+      <button class="btn" id="loadDemo" type="button">Load demo data</button>
+    </div>
+    <form class="filters card" id="dashFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <div class="chips" id="dashVehicles" aria-label="Vehicles"></div>
+      <button type="button" class="btn ghost" id="dashClear">Clear filters</button>
+    </form>
+    <p class="period" id="dashPeriod"></p>
+
+    <div class="kpis" id="kpis"></div>
+    <div class="spotlight" id="spotlight"></div>
+
+    <div class="grid2">
+      <div class="card"><h2>Monthly cost trend</h2><p class="sub">Fuel cost and maintenance spending per month</p><div id="chTrend" class="chart"></div><div class="legend" id="lgTrend"></div></div>
+      <div class="card"><h2>Fuel economy by vehicle</h2><p class="sub">Kilometres per litre (higher is better)</p><div id="chEco" class="chart"></div></div>
+      <div class="card"><h2>Fuel cost per kilometre</h2><p class="sub">Rupees per km (lower is better)</p><div id="chCpk" class="chart"></div></div>
+      <div class="card"><h2>Running cost by vehicle</h2><p class="sub">Fuel plus maintenance and other expenses</p><div id="chRun" class="chart"></div><div class="legend" id="lgRun"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Vehicle comparison</h2>
+      <div class="tablewrap"><table id="summaryTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Needs attention</h2>
+      <p class="sub">Records with a data problem or an alert (latest first)</p>
+      <div class="tablewrap" id="attention"></div>
+    </div>
+  </section>
+
+  <!-- ================= ODOMETER ================= -->
+  <section id="view-odometer" class="view" hidden>
+    <div class="card odo-card">
+      <div class="odo-head">
+        <label>Vehicle <select id="odoVehicle"></select></label>
+        <div class="odo-meta" id="odoMeta"></div>
+      </div>
+      <div class="odo-body">
+        <div class="odo-stage">
+          <div class="odometer" id="odometer" aria-live="polite"></div><span class="unit">KM</span>
+        </div>
+        <div class="gauge-box">
+          <svg class="gauge" viewBox="0 0 300 250" role="img" aria-label="Average fuel economy gauge">
+            <defs><linearGradient id="gArc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>
+            <path class="track" d="M 45 215 A 120 120 0 1 1 255 215" pathLength="100"/>
+            <path class="fill" id="gaugeFill" d="M 45 215 A 120 120 0 1 1 255 215" pathLength="100" stroke-dasharray="0 100"/>
+            <g id="gaugeTicks"></g>
+            <g class="needle" id="gaugeNeedle" style="transform: rotate(-125deg)">
+              <line x1="150" y1="150" x2="150" y2="52" stroke="#fb7185" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="150" cy="150" r="9" fill="#0f172a" stroke="#fb7185" stroke-width="4"/><circle cx="150" cy="150" r="3" fill="#fff"/>
+            </g>
+            <text class="big" id="gaugeVal" x="150" y="196">-</text>
+            <text class="cap" x="150" y="214">KM PER LITRE (AVERAGE)</text>
+          </svg>
+        </div>
+      </div>
+      <p class="odo-note" id="odoNote"></p>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>Latest refuellings</h2><div class="tablewrap" id="odoRecent"></div></div>
+      <div class="card"><h2>All vehicles</h2><div class="minis" id="odoAll"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= FUEL LOG ================= -->
+  <section id="view-fuel" class="view" hidden>
+    <form class="filters card" id="fuelFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <label>Vehicle <select name="vehicle"></select></label>
+      <label class="check"><input type="checkbox" name="flagged" value="1"> Problems and alerts only</label>
+      <button type="button" class="btn ghost" id="fuelClear">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="fuelAdd">+ Record refuelling</button>
+    </form>
+    <div class="card">
+      <p class="sub" id="fuelCount"></p>
+      <div class="tablewrap tall" id="fuelTable"></div>
+    </div>
+  </section>
+
+  <!-- ================= VEHICLES ================= -->
+  <section id="view-vehicles" class="view" hidden>
+    <div class="bar"><h2>Fleet vehicles</h2><button class="btn" id="vehAdd">+ Add vehicle</button></div>
+    <div class="card"><div class="tablewrap" id="vehTable"></div></div>
+    <p class="hint">Deactivating a vehicle keeps its history but hides it from new refuelling entries.</p>
+  </section>
+
+  <!-- ================= MAINTENANCE ================= -->
+  <section id="view-maintenance" class="view" hidden>
+    <form class="filters card" id="mainFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <label>Vehicle <select name="vehicle"></select></label>
+      <label>Category <select name="category"></select></label>
+      <button type="button" class="btn ghost" id="mainClear">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="mainAdd">+ Add expense</button>
+    </form>
+    <div class="kpis small" id="mainKpis"></div>
+    <div class="card"><div class="tablewrap" id="mainTable"></div></div>
+  </section>
+
+  <!-- ================= DATA ================= -->
+  <section id="view-data" class="view" hidden>
+    <div>
+      <div class="card">
+        <h2>Export</h2>
+        <p class="sub">Download the stored data. CSV files open in Excel.</p>
+        <div class="stack">
+          <button class="btn" id="exSummary" type="button">Vehicle summary (CSV)</button>
+          <button class="btn ghost" id="exFuel" type="button">Fuel log (CSV)</button>
+          <button class="btn ghost" id="exMaint" type="button">Maintenance (CSV)</button>
+        </div>
+        <p class="hint" id="dataCounts"></p>
+      </div>
+    </div>
+    <div class="card how">
+      <h2>How the numbers are calculated</h2>
+      <ul>
+        <li><b>Total cost</b> = litres × price per litre. The receipt total you type is only compared with it (difference above max(1, 0.5%) is flagged).</li>
+        <li><b>Distance</b> = this odometer reading − the previous reading of the same vehicle.</li>
+        <li><b>Fuel economy (km/L)</b> = distance ÷ litres, using the full-tank-to-full-tank method: fill the tank completely each time.</li>
+        <li><b>Cost per km</b> = total cost ÷ distance. Only valid intervals (distance above 0) count.</li>
+        <li>The <b>first record of each vehicle</b> is a starting point. It has no previous reading, so it shows no km/L and no cost per km.</li>
+        <li><b>Alerts:</b> km/L more than 15% below the vehicle's own average, or price per litre more than 10% above its own average.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<!-- ================= DIALOGS ================= -->
+<dialog id="fuelDialog">
+  <form id="fuelForm" novalidate>
+    <h2 id="fuelTitle">Record refuelling</h2>
+    <div class="fields">
+      <label class="wide">Vehicle <select name="vehicle_id" required></select></label>
+      <label>Date <input type="date" name="date" required></label>
+      <label>Time <input type="time" name="time" required></label>
+      <label>Odometer (km) <input type="number" name="odometer" min="0" step="1" inputmode="numeric" required></label>
+      <label>Litres <input type="number" name="litres" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Price per litre <input type="number" name="price" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Receipt total <small>(optional)</small> <input type="number" name="receipt" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="wide">Station <small>(optional)</small> <input type="text" name="station" maxlength="60"></label>
+    </div>
+    <div class="calc" id="fuelCalc"></div>
+    <p class="hintline" id="fuelLast"></p>
+    <label class="check confirm" id="fuelConfirmRow" hidden><input type="checkbox" name="confirm"> Confirm: save this reading even though it looks unusual</label>
+    <div class="msgbox" id="fuelMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="vehDialog">
+  <form id="vehForm" novalidate>
+    <h2 id="vehTitle">Add vehicle</h2>
+    <div class="fields">
+      <label>Vehicle ID <input name="vehicle_id" maxlength="12" placeholder="V07" required></label>
+      <label>Registration <input name="registration" maxlength="20" placeholder="ABC-707" required></label>
+      <label>Make / model <input name="make_model" maxlength="60"></label>
+      <label>Vehicle type <input name="vehicle_type" maxlength="40" placeholder="Van, pickup, truck"></label>
+      <label>Fuel type <select name="fuel_type"></select></label>
+      <label>Driver <input name="driver" maxlength="60"></label>
+      <label class="wide">Notes <input name="notes" maxlength="300"></label>
+      <label class="check wide" id="vehActiveRow"><input type="checkbox" name="active" checked> Active</label>
+    </div>
+    <div class="msgbox" id="vehMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="mainDialog">
+  <form id="mainForm" novalidate>
+    <h2>Add maintenance or other expense</h2>
+    <div class="fields">
+      <label class="wide">Vehicle <select name="vehicle_id" required></select></label>
+      <label>Date <input type="date" name="date" required></label>
+      <label>Category <select name="category" required></select></label>
+      <label class="wide">Description <input name="description" maxlength="120" placeholder="Oil and filter change"></label>
+      <label>Cost <input type="number" name="cost" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Odometer (km) <small>(optional)</small> <input type="number" name="odometer" min="0" step="1" inputmode="numeric"></label>
+      <label class="wide">Notes <input name="notes" maxlength="300"></label>
+    </div>
+    <div class="msgbox" id="mainMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* data.js - the demo data. Open this file in VS Code to read or change it.
+   The first time the page opens, these lists are copied into the browser's storage.
+   After that the browser's copy is used, so if you edit this file, open the app and press
+   Data & export -> "Reload demo data" to load your changes.
+
+   vehicles : vehicle_id, registration, make_model, vehicle_type, fuel_type, driver, notes, active (1 = active, 0 = inactive)
+   fuel     : vehicle_id, fill_datetime ("YYYY-MM-DD HH:MM"), odometer_km, litres, price_per_litre, receipt_total (or null), station, odometer_confirmed (0 or 1)
+   maint    : vehicle_id, maint_date ("YYYY-MM-DD"), category (Service, Tyres, Repair, Insurance, Other), description, cost, odometer_km (or null), notes
+   One record per line. Keep the commas and quotes exactly as they are. */
+
+const SEED = {
+  vehicles: [
+    {"vehicle_id": "V01", "registration": "ABC-101", "make_model": "Toyota Hiace", "vehicle_type": "Delivery van", "fuel_type": "Diesel", "driver": "Ahmed", "notes": "", "active": 1},
+    {"vehicle_id": "V02", "registration": "ABC-202", "make_model": "Suzuki Ravi", "vehicle_type": "Pickup", "fuel_type": "Petrol", "driver": "Bilal", "notes": "", "active": 1},
+    {"vehicle_id": "V03", "registration": "ABC-303", "make_model": "Hino 500", "vehicle_type": "Truck", "fuel_type": "Diesel", "driver": "Imran", "notes": "", "active": 1},
+    {"vehicle_id": "V04", "registration": "ABC-404", "make_model": "Toyota Corolla", "vehicle_type": "Sedan", "fuel_type": "Petrol", "driver": "Sara", "notes": "", "active": 1},
+    {"vehicle_id": "V05", "registration": "ABC-505", "make_model": "Suzuki Bolan", "vehicle_type": "Van", "fuel_type": "Petrol", "driver": "Usman", "notes": "", "active": 1},
+    {"vehicle_id": "V06", "registration": "ABC-606", "make_model": "Toyota Hilux", "vehicle_type": "Pickup", "fuel_type": "Diesel", "driver": "Hamza", "notes": "", "active": 1}
+  ],
+
+  fuel: [
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-03 18:30", "odometer_km": 62000, "litres": 41.8, "price_per_litre": 268.18, "receipt_total": 11210.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-16 12:50", "odometer_km": 62417, "litres": 47.8, "price_per_litre": 269.61, "receipt_total": 12887.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-25 17:50", "odometer_km": 62779, "litres": 41.7, "price_per_litre": 269.52, "receipt_total": 11239.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-07-08 15:50", "odometer_km": 63247, "litres": 49.7, "price_per_litre": 270.56, "receipt_total": 13447.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-07-21 08:10", "odometer_km": 63565, "litres": 35.2, "price_per_litre": 269.48, "receipt_total": 9486.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-02 08:50", "odometer_km": 63927, "litres": 39.9, "price_per_litre": 270.59, "receipt_total": 10797.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-14 12:40", "odometer_km": 64230, "litres": 35.1, "price_per_litre": 272.66, "receipt_total": 9570.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-25 07:40", "odometer_km": 64578, "litres": 39.7, "price_per_litre": 272.27, "receipt_total": 10809.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-06 07:50", "odometer_km": 64901, "litres": 36.6, "price_per_litre": 272.3, "receipt_total": 9966.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-16 17:30", "odometer_km": 65258, "litres": 38.1, "price_per_litre": 274.21, "receipt_total": 10447.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-25 09:00", "odometer_km": 65638, "litres": 43.5, "price_per_litre": 275.52, "receipt_total": 11985.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-10-06 08:10", "odometer_km": 65952, "litres": 35.2, "price_per_litre": 276.97, "receipt_total": 9749.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-04 08:50", "odometer_km": 61000, "litres": 28.7, "price_per_litre": 262.89, "receipt_total": 7545.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-16 12:50", "odometer_km": 61393, "litres": 34.1, "price_per_litre": 263.51, "receipt_total": 8986.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-25 18:40", "odometer_km": 61770, "litres": 32.7, "price_per_litre": 261.9, "receipt_total": 8564.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-04 17:40", "odometer_km": 62102, "litres": 30.5, "price_per_litre": 265.16, "receipt_total": 8087.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-13 18:40", "odometer_km": 62528, "litres": 39.9, "price_per_litre": 264.07, "receipt_total": 10536.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-24 17:10", "odometer_km": 62871, "litres": 32.6, "price_per_litre": 264.63, "receipt_total": 8627.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-06 15:30", "odometer_km": 63232, "litres": 32.4, "price_per_litre": 265.08, "receipt_total": 8589.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-18 18:40", "odometer_km": 63553, "litres": 30.2, "price_per_litre": 316.39, "receipt_total": 9555.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-28 17:30", "odometer_km": 63886, "litres": 29.9, "price_per_litre": 267.76, "receipt_total": 8006.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-09-10 15:20", "odometer_km": 64190, "litres": 28.9, "price_per_litre": 267.13, "receipt_total": 7720.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-09-22 09:40", "odometer_km": 64543, "litres": 31.1, "price_per_litre": 269.29, "receipt_total": 8375.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-10-01 15:40", "odometer_km": 64867, "litres": 29.5, "price_per_litre": 270.16, "receipt_total": 7970.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-05 17:00", "odometer_km": 57000, "litres": 68.7, "price_per_litre": 269.24, "receipt_total": 18497.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-16 09:20", "odometer_km": 57361, "litres": 74.1, "price_per_litre": 267.34, "receipt_total": 19810.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-25 17:50", "odometer_km": 57739, "litres": 72.8, "price_per_litre": 270.84, "receipt_total": 19717.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-08 17:20", "odometer_km": 58043, "litres": 63.9, "price_per_litre": 271.33, "receipt_total": 17338.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-17 09:20", "odometer_km": 58422, "litres": 79.2, "price_per_litre": 269.5, "receipt_total": 21344.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-26 17:50", "odometer_km": 58748, "litres": 65.0, "price_per_litre": 272.21, "receipt_total": 17694.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-06 18:30", "odometer_km": 59117, "litres": 72.5, "price_per_litre": 273.4, "receipt_total": 19822.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-18 15:00", "odometer_km": 59514, "litres": 78.5, "price_per_litre": 272.55, "receipt_total": 21395.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-27 12:50", "odometer_km": 59828, "litres": 94.8, "price_per_litre": 272.87, "receipt_total": 25868.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-08 12:40", "odometer_km": 60278, "litres": 88.2, "price_per_litre": 274.17, "receipt_total": 24182.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-21 12:00", "odometer_km": 60675, "litres": 83.3, "price_per_litre": 275.3, "receipt_total": 22932.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-30 09:00", "odometer_km": 61061, "litres": 76.4, "price_per_litre": 276.96, "receipt_total": 21160.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-06 15:10", "odometer_km": 68000, "litres": 33.4, "price_per_litre": 262.34, "receipt_total": 8762.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-18 09:10", "odometer_km": 68484, "litres": 38.2, "price_per_litre": 262.41, "receipt_total": 10024.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-28 09:10", "odometer_km": 69042, "litres": 43.4, "price_per_litre": 263.65, "receipt_total": 11442.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-08 17:00", "odometer_km": 69555, "litres": 38.2, "price_per_litre": 265.15, "receipt_total": 10129.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-18 18:30", "odometer_km": 69983, "litres": 33.0, "price_per_litre": 266.08, "receipt_total": 8781.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-31 15:30", "odometer_km": 70470, "litres": 38.2, "price_per_litre": 266.52, "receipt_total": 10181.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-08-09 17:50", "odometer_km": 71013, "litres": 42.7, "price_per_litre": 266.52, "receipt_total": 11380.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-08-22 17:10", "odometer_km": 71492, "litres": 36.3, "price_per_litre": 267.09, "receipt_total": 9695.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-03 18:10", "odometer_km": 71947, "litres": 34.1, "price_per_litre": 266.9, "receipt_total": 9101.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-12 18:20", "odometer_km": 72441, "litres": 37.5, "price_per_litre": 268.77, "receipt_total": 10079.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-22 07:30", "odometer_km": 72884, "litres": 34.2, "price_per_litre": 268.04, "receipt_total": 9167.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-10-02 15:40", "odometer_km": 73346, "litres": 34.6, "price_per_litre": 269.82, "receipt_total": 9336.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-06-07 08:00", "odometer_km": 83000, "litres": 33.4, "price_per_litre": 262.6, "receipt_total": 8771.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-06-19 07:30", "odometer_km": 83258, "litres": 25.9, "price_per_litre": 263.08, "receipt_total": 6814.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-01 18:50", "odometer_km": 83550, "litres": 27.9, "price_per_litre": 262.2, "receipt_total": 7315.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-11 09:40", "odometer_km": 83817, "litres": 27.0, "price_per_litre": 262.86, "receipt_total": 7097.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-22 07:00", "odometer_km": 84170, "litres": 34.1, "price_per_litre": 264.35, "receipt_total": 8113.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-02 07:10", "odometer_km": 84481, "litres": 30.3, "price_per_litre": 265.46, "receipt_total": 8043.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-14 18:10", "odometer_km": 84799, "litres": 32.9, "price_per_litre": 265.71, "receipt_total": 8742.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-24 17:50", "odometer_km": 85163, "litres": 35.0, "price_per_litre": 266.95, "receipt_total": 9343.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-05 12:40", "odometer_km": 85475, "litres": 30.6, "price_per_litre": 268.37, "receipt_total": 8212.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-18 15:20", "odometer_km": 85788, "litres": 31.2, "price_per_litre": 269.33, "receipt_total": 8403.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-30 09:10", "odometer_km": 86146, "litres": 34.5, "price_per_litre": 269.33, "receipt_total": 9292.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-10-13 07:40", "odometer_km": 86440, "litres": 29.7, "price_per_litre": 268.54, "receipt_total": 7976.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-06-08 12:40", "odometer_km": 40000, "litres": 68.9, "price_per_litre": 266.63, "receipt_total": 18371.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-06-20 12:30", "odometer_km": 40450, "litres": 58.2, "price_per_litre": 269.99, "receipt_total": 15713.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-01 18:30", "odometer_km": 40945, "litres": 61.9, "price_per_litre": 268.92, "receipt_total": 16646.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-10 08:50", "odometer_km": 41436, "litres": 60.6, "price_per_litre": 271.38, "receipt_total": 16446.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-19 09:50", "odometer_km": 41908, "litres": 60.7, "price_per_litre": 271.36, "receipt_total": 16472.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-29 07:40", "odometer_km": 42453, "litres": 70.9, "price_per_litre": 272.19, "receipt_total": 19298.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-08 17:30", "odometer_km": 43057, "litres": 72.8, "price_per_litre": 270.77, "receipt_total": 19712.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-21 15:10", "odometer_km": 43551, "litres": 60.9, "price_per_litre": 273.32, "receipt_total": 16645.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-31 08:20", "odometer_km": 44183, "litres": 78.0, "price_per_litre": 273.14, "receipt_total": 21305.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-10 08:10", "odometer_km": 44697, "litres": 61.2, "price_per_litre": 275.46, "receipt_total": 16858.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-19 12:40", "odometer_km": 45175, "litres": 62.2, "price_per_litre": 276.0, "receipt_total": 17167.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-29 08:40", "odometer_km": 45710, "litres": 65.7, "price_per_litre": 274.25, "receipt_total": 18018.0, "station": "Total", "odometer_confirmed": 0}
+  ],
+
+  maint: [
+    {"vehicle_id": "V01", "maint_date": "2026-06-20", "category": "Service", "description": "Oil and filter change", "cost": 9500.0, "odometer_km": 62600, "notes": ""},
+    {"vehicle_id": "V01", "maint_date": "2026-09-04", "category": "Insurance", "description": "Annual insurance", "cost": 45000.0, "odometer_km": 63700, "notes": ""},
+    {"vehicle_id": "V01", "maint_date": "2026-10-12", "category": "Repair", "description": "Battery replaced", "cost": 22000.0, "odometer_km": 64300, "notes": ""},
+    {"vehicle_id": "V02", "maint_date": "2026-07-28", "category": "Tyres", "description": "Two new rear tyres", "cost": 24000.0, "odometer_km": 61900, "notes": ""},
+    {"vehicle_id": "V02", "maint_date": "2026-09-18", "category": "Service", "description": "Oil change", "cost": 6000.0, "odometer_km": 63100, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-07-15", "category": "Service", "description": "Engine service", "cost": 32000.0, "odometer_km": 58200, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-09-11", "category": "Repair", "description": "Radiator hose", "cost": 14500.0, "odometer_km": 59300, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-10-15", "category": "Insurance", "description": "Annual insurance", "cost": 120000.0, "odometer_km": 60500, "notes": ""},
+    {"vehicle_id": "V04", "maint_date": "2026-08-05", "category": "Service", "description": "Oil change", "cost": 6500.0, "odometer_km": 69100, "notes": ""},
+    {"vehicle_id": "V04", "maint_date": "2026-10-02", "category": "Other", "description": "Car wash and cleaning", "cost": 2500.0, "odometer_km": 70200, "notes": ""},
+    {"vehicle_id": "V05", "maint_date": "2026-08-19", "category": "Repair", "description": "Brake pads replaced", "cost": 11000.0, "odometer_km": 84300, "notes": ""},
+    {"vehicle_id": "V05", "maint_date": "2026-10-08", "category": "Service", "description": "Oil and filter change", "cost": 7800.0, "odometer_km": 85600, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-08-30", "category": "Service", "description": "Oil and filter change", "cost": 12500.0, "odometer_km": 41600, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-09-25", "category": "Tyres", "description": "Four new tyres", "cost": 96000.0, "odometer_km": 42800, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-10-20", "category": "Repair", "description": "Clutch adjustment", "cost": 8500.0, "odometer_km": 44000, "notes": ""}
+  ]
+};
+
+</script>
+<script>
+/* store.js - the "database" and all rules/calculations, running inside the browser.
+   Data is saved in the browser's localStorage (key below), so it stays after the page is closed.
+   app.js talks to this file through Store.handle(), which answers like a small server would. */
+"use strict";
+const Store = (() => {
+  const KEY = "fleetFuelManager_v1";
+  const CATEGORIES = ["Service", "Tyres", "Repair", "Insurance", "Other"];
+  const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
+  // ---- rules and thresholds (change a number here to change the rule) ----
+  const MAX_PLAUSIBLE_KM = 2000;     // more km than this between two refuellings is "suspicious"
+  const MAX_LITRES = 500;            // more litres than this in one refuelling is rejected
+  const S = { low: 0.15, high: 0.10, tolAbs: 1, tolPct: 0.005 };   // alerts: km/L 15% below avg, price 10% above avg; receipt tolerance max(1, 0.5%)
+
+  let db;
+  const clone = o => JSON.parse(JSON.stringify(o));
+  function seed() {
+    const d = { vehicles: clone(SEED.vehicles), fuel: [], maint: [], nextFill: 1, nextMaint: 1 };
+    SEED.fuel.forEach(f => d.fuel.push({ fill_id: d.nextFill++, ...clone(f) }));
+    SEED.maint.forEach(m => d.maint.push({ maint_id: d.nextMaint++, ...clone(m) }));
+    return d;
+  }
+  function load() {
+    try { const raw = localStorage.getItem(KEY); if (raw) { const d = JSON.parse(raw); if (d && Array.isArray(d.vehicles) && Array.isArray(d.fuel) && Array.isArray(d.maint)) return d; } } catch (e) {}
+    return seed();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
+  db = load();
+
+  // ---------------------------------------------------------------- results
+  const ok = m => ({ ok: true, message: m, needs_confirm: false });
+  const fail = m => ({ ok: false, message: m, needs_confirm: false });
+  const confirmMsg = m => ({ ok: false, message: m, needs_confirm: true });
+  const fmt = (v, d = 2) => Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  // ---------------------------------------------------------------- small helpers
+  const num = v => { if (v === null || v === undefined || (typeof v === "string" && !v.trim())) return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const isDate = s => { if (!/^\d{4}-\d{2}-\d{2}$/.test(s || "")) return false; const [y, m, d] = s.split("-").map(Number), t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d; };
+  const isTime = s => /^([01]\d|2[0-3]):[0-5]\d$/.test(s || "");
+  const stamp = (d, t) => (isDate(d) ? d + " " + (isTime(t) ? t : "00:00") : null);
+  const today = () => { const n = new Date(), p = x => String(x).padStart(2, "0"); return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}`; };
+  const byKey = (...keys) => (a, b) => { for (const k of keys) { if (a[k] < b[k]) return -1; if (a[k] > b[k]) return 1; } return 0; };
+
+  // ---------------------------------------------------------------- calculations
+  /* Every refuelling with the calculated columns:
+     km_driven = odometer - previous odometer of the same vehicle   (first record: no value)
+     km_per_litre = km_driven / litres   (full-tank to full-tank method, only for valid intervals)
+     cost_per_km = total_cost / km_driven   (only for valid intervals) */
+  function fuelFrame() {
+    const vm = new Map(db.vehicles.map(v => [v.vehicle_id, v]));
+    const rows = db.fuel.filter(f => vm.has(f.vehicle_id)).map(f => {
+      const v = vm.get(f.vehicle_id);
+      return { ...f, registration: v.registration, driver: v.driver, make_model: v.make_model };
+    }).sort(byKey("vehicle_id", "fill_datetime", "fill_id"));
+    let pv = null, prevOdo = null;
+    for (const r of rows) {
+      r.prev_odometer = pv === r.vehicle_id ? prevOdo : null;
+      pv = r.vehicle_id; prevOdo = r.odometer_km;
+      r.km_driven = r.prev_odometer === null ? null : r.odometer_km - r.prev_odometer;
+      r.total_cost = r.litres * r.price_per_litre;
+      r.valid = r.km_driven !== null && r.km_driven > 0;
+      r.km_per_litre = r.valid ? r.km_driven / r.litres : null;
+      r.cost_per_km = r.valid ? r.total_cost / r.km_driven : null;
+      if (r.receipt_total === null || r.receipt_total === undefined) { r.receipt_total = null; r.receipt_check = "No receipt"; }
+      else r.receipt_check = Math.abs(r.receipt_total - r.total_cost) <= Math.max(S.tolAbs, S.tolPct * r.total_cost) ? "OK" : "Mismatch";
+      const badOdo = r.km_driven !== null && r.km_driven <= 0 && !r.odometer_confirmed;
+      const far = r.km_driven !== null && r.km_driven > MAX_PLAUSIBLE_KM && !r.odometer_confirmed;
+      r.data_check = badOdo ? "Odometer not higher than previous" : far ? "Very long distance since previous refuelling" : r.receipt_check === "Mismatch" ? "Receipt mismatch" : "OK";
+      r.fill_date = r.fill_datetime.slice(0, 10);
+    }
+    const sums = {};
+    for (const r of rows) {
+      const s = sums[r.vehicle_id] || (sums[r.vehicle_id] = { km: 0, vl: 0, cost: 0, l: 0 });
+      s.cost += r.total_cost; s.l += r.litres;
+      if (r.valid) { s.km += r.km_driven; s.vl += r.litres; }
+    }
+    for (const r of rows) {
+      const s = sums[r.vehicle_id], avgKmpl = s.vl > 0 ? s.km / s.vl : null, avgPrice = s.cost / s.l;
+      const low = r.km_per_litre !== null && avgKmpl !== null && r.km_per_litre < avgKmpl * (1 - S.low);
+      const high = r.price_per_litre > avgPrice * (1 + S.high);
+      r.alert = low && high ? "Low km/L, High price" : low ? "Low km/L" : high ? "High price" : "";
+    }
+    return rows;
+  }
+  function maintFrame() {
+    const vm = new Map(db.vehicles.map(v => [v.vehicle_id, v]));
+    return db.maint.filter(m => vm.has(m.vehicle_id)).map(m => ({ ...m, registration: vm.get(m.vehicle_id).registration, make_model: vm.get(m.vehicle_id).make_model }))
+      .sort((a, b) => (a.maint_date < b.maint_date ? 1 : a.maint_date > b.maint_date ? -1 : b.maint_id - a.maint_id));
+  }
+  const inRange = (d, start, end) => (!start || d >= start) && (!end || d <= end);
+  const filterFuel = (rows, start, end, ids) => rows.filter(r => inRange(r.fill_date, start, end) && (!ids.length || ids.includes(r.vehicle_id)));
+  const filterMaint = (rows, start, end, ids, cat) => rows.filter(m => inRange(m.maint_date, start, end) && (!ids.length || ids.includes(m.vehicle_id)) && (!cat || m.category === cat));
+
+  function vehicleSummary(fuel, maint, vehicles) {
+    return vehicles.map(v => {
+      const f = fuel.filter(r => r.vehicle_id === v.vehicle_id), ok_ = f.filter(r => r.valid);
+      const sum = (a, k) => a.reduce((t, r) => t + r[k], 0);
+      const validKm = sum(ok_, "km_driven"), vl = sum(ok_, "litres"), vc = sum(ok_, "total_cost");
+      const fuelCost = sum(f, "total_cost"), maintCost = maint.filter(m => m.vehicle_id === v.vehicle_id).reduce((t, m) => t + m.cost, 0);
+      return { vehicle_id: v.vehicle_id, registration: v.registration, make_model: v.make_model, vehicle_type: v.vehicle_type, driver: v.driver, active: v.active,
+               fills: f.length, litres: sum(f, "litres"), fuel_cost: fuelCost, valid_km: validKm,
+               km_per_litre: vl > 0 ? validKm / vl : null, cost_per_km: validKm > 0 ? vc / validKm : null, maintenance: maintCost, running_cost: fuelCost + maintCost };
+    });
+  }
+  function kpis(fuel, maint, summary) {
+    const valid = fuel.filter(r => r.valid), sum = (a, k) => a.reduce((t, r) => t + r[k], 0);
+    const totalKm = sum(valid, "km_driven");
+    const k = { total_km: totalKm, litres: sum(fuel, "litres"), fuel_cost: sum(fuel, "total_cost"),
+                cost_per_km: totalKm > 0 ? sum(valid, "total_cost") / totalKm : null, km_per_litre: totalKm > 0 ? totalKm / sum(valid, "litres") : null,
+                maintenance: maint.reduce((t, m) => t + m.cost, 0), flagged: fuel.filter(r => r.data_check !== "OK").length, alerts: fuel.filter(r => r.alert !== "").length,
+                best: null, worst: null, top: null };
+    const eco = summary.filter(s => s.km_per_litre !== null);
+    if (eco.length) {
+      const best = eco.reduce((a, b) => (b.km_per_litre > a.km_per_litre ? b : a)), worst = eco.reduce((a, b) => (b.km_per_litre < a.km_per_litre ? b : a));
+      k.best = { vehicle_id: best.vehicle_id, value: best.km_per_litre }; k.worst = { vehicle_id: worst.vehicle_id, value: worst.km_per_litre };
+    }
+    const used = summary.filter(s => s.litres > 0);
+    if (used.length) { const t = used.reduce((a, b) => (b.litres > a.litres ? b : a)); k.top = { vehicle_id: t.vehicle_id, value: t.litres }; }
+    return k;
+  }
+  function monthlyTrend(fuel, maint, months = 12) {
+    const f = {}, m = {};
+    fuel.forEach(r => { const k = r.fill_date.slice(0, 7); f[k] = (f[k] || 0) + r.total_cost; });
+    maint.forEach(r => { const k = r.maint_date.slice(0, 7); m[k] = (m[k] || 0) + r.cost; });
+    const keys = Object.keys({ ...f, ...m }).sort();
+    if (!keys.length) return [];
+    const out = []; let [y, mo] = keys[0].split("-").map(Number); const [ey, em] = keys[keys.length - 1].split("-").map(Number);
+    while (y < ey || (y === ey && mo <= em)) {
+      const key = `${y}-${String(mo).padStart(2, "0")}`;
+      out.push({ month: key, label: new Date(y, mo - 1, 1).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }), fuel_cost: f[key] || 0, maintenance: m[key] || 0 });
+      if (++mo > 12) { mo = 1; y++; }
+    }
+    return out.slice(-months);
+  }
+  function latestReadings(fuel) {
+    const out = {};
+    [...fuel].sort(byKey("fill_datetime", "fill_id")).forEach(r => { out[r.vehicle_id] = { km: r.odometer_km, at: r.fill_datetime }; });
+    return out;
+  }
+
+  // ---------------------------------------------------------------- rules for a new / changed refuelling
+  function cleanFill(when, odometer, litres, price, receipt) {
+    if (!when) return [null, "Choose a valid date and time."];
+    if (new Date(when.replace(" ", "T")) > new Date(Date.now() + 5 * 60000)) return [null, "Date and time cannot be in the future."];
+    const odo = num(odometer), lit = num(litres), pr = num(price), rec = num(receipt);
+    if (odo === null || odo < 0 || !Number.isInteger(odo) || odo > 9999999) return [null, "Odometer must be a whole number of km (0 or more)."];
+    if (lit === null || lit <= 0) return [null, "Litres must be greater than 0."];
+    if (lit > MAX_LITRES) return [null, `${fmt(lit, 1)} litres in one refuelling is not possible (limit ${MAX_LITRES}).`];
+    if (pr === null || pr <= 0) return [null, "Price per litre must be greater than 0."];
+    if (receipt !== null && receipt !== undefined && String(receipt).trim() !== "" && (rec === null || rec < 0)) return [null, "Receipt total must be a number (0 or more), or left empty."];
+    return [{ odo, litres: lit, price: pr, receipt: rec }, null];
+  }
+  function odometerIssues(vehicleId, when, odo, excludeId) {
+    const rows = db.fuel.filter(f => f.vehicle_id === vehicleId && f.fill_id !== excludeId).sort(byKey("fill_datetime", "fill_id"));
+    const before = rows.filter(r => r.fill_datetime <= when), after = rows.filter(r => r.fill_datetime > when);
+    const prev = before[before.length - 1], next = after[0], issues = [];
+    if (prev && odo <= prev.odometer_km) issues.push(`Odometer ${odo.toLocaleString("en-US")} km is not higher than the previous reading (${prev.odometer_km.toLocaleString("en-US")} km on ${prev.fill_datetime}).`);
+    if (next && odo >= next.odometer_km) issues.push(`Odometer ${odo.toLocaleString("en-US")} km is not lower than the next reading (${next.odometer_km.toLocaleString("en-US")} km on ${next.fill_datetime}).`);
+    if (prev && odo - prev.odometer_km > MAX_PLAUSIBLE_KM) issues.push(`${(odo - prev.odometer_km).toLocaleString("en-US")} km since the previous refuelling is more than ${MAX_PLAUSIBLE_KM.toLocaleString("en-US")} km.`);
+    return issues;
+  }
+  function receiptNote(c) {
+    if (c.receipt === null) return "";
+    const total = c.litres * c.price, diff = c.receipt - total;
+    return Math.abs(diff) > Math.max(S.tolAbs, S.tolPct * total) ? ` Warning: the receipt total differs from litres x price (${fmt(total)}) by ${diff >= 0 ? "+" : ""}${fmt(diff)}.` : " Receipt total matches.";
+  }
+  const duplicate = (vid, when, odo, exclude) => db.fuel.some(f => f.vehicle_id === vid && f.fill_datetime === when && f.odometer_km === odo && f.fill_id !== exclude);
+
+  function addFill(d) {
+    const v = db.vehicles.find(x => x.vehicle_id === d.vehicle_id);
+    if (!v) return fail("Choose a vehicle from the list.");
+    if (!v.active) return fail("This vehicle is inactive. Reactivate it on the Vehicles page first.");
+    const when = stamp(d.date, d.time), [c, err] = cleanFill(when, d.odometer, d.litres, d.price, d.receipt);
+    if (err) return fail(err);
+    const issues = odometerIssues(v.vehicle_id, when, c.odo, null);
+    if (issues.length && !d.confirm) return confirmMsg(issues.join(" ") + " Correct the value, or tick 'Confirm' to save it anyway.");
+    if (duplicate(v.vehicle_id, when, c.odo, null)) return fail("This refuelling (same vehicle, time and odometer) is already recorded.");
+    db.fuel.push({ fill_id: db.nextFill++, vehicle_id: v.vehicle_id, fill_datetime: when, odometer_km: c.odo, litres: c.litres, price_per_litre: c.price,
+                   receipt_total: c.receipt, station: String(d.station || "").trim().slice(0, 60), odometer_confirmed: issues.length ? 1 : 0 });
+    save();
+    return ok(`Refuelling saved. Calculated total: ${fmt(c.litres * c.price)}.` + receiptNote(c));
+  }
+  function updateFill(id, d) {
+    const row = db.fuel.find(f => f.fill_id === id);
+    if (!row) return fail("Record not found.");
+    const when = stamp(d.date, d.time), [c, err] = cleanFill(when, d.odometer, d.litres, d.price, d.receipt);
+    if (err) return fail(err);
+    const issues = odometerIssues(row.vehicle_id, when, c.odo, id);
+    if (issues.length && !d.confirm) return confirmMsg(issues.join(" ") + " Correct the value, or tick 'Confirm' to save it anyway.");
+    if (duplicate(row.vehicle_id, when, c.odo, id)) return fail("Another record with the same vehicle, time and odometer already exists.");
+    Object.assign(row, { fill_datetime: when, odometer_km: c.odo, litres: c.litres, price_per_litre: c.price, receipt_total: c.receipt,
+                         station: String(d.station || "").trim().slice(0, 60), odometer_confirmed: issues.length ? 1 : 0 });
+    save();
+    return ok("Refuelling updated." + receiptNote(c));
+  }
+  function deleteFill(id) {
+    const n = db.fuel.length; db.fuel = db.fuel.filter(f => f.fill_id !== id); save();
+    return db.fuel.length < n ? ok("Refuelling deleted.") : fail("Record not found.");
+  }
+
+  // ---------------------------------------------------------------- vehicles
+  function cleanVehicle(d) {
+    const reg = String(d.registration || "").trim();
+    if (!reg) return [null, "Registration is required."];
+    if (reg.length > 20) return [null, "Registration is too long (20 characters at most)."];
+    const fuel = String(d.fuel_type || "").trim();
+    if (fuel && !FUEL_TYPES.includes(fuel)) return [null, "Choose a fuel type from the list."];
+    return [{ registration: reg, make_model: String(d.make_model || "").trim().slice(0, 60), vehicle_type: String(d.vehicle_type || "").trim().slice(0, 40), fuel_type: fuel,
+              driver: String(d.driver || "").trim().slice(0, 60), notes: String(d.notes || "").trim().slice(0, 300) }, null];
+  }
+  function addVehicle(d) {
+    const vid = String(d.vehicle_id || "").trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{1,12}$/.test(vid)) return fail("Vehicle ID: use 1-12 letters, digits, '-' or '_' (for example V07).");
+    const [c, err] = cleanVehicle(d); if (err) return fail(err);
+    if (db.vehicles.some(v => v.vehicle_id === vid || v.registration.toLowerCase() === c.registration.toLowerCase())) return fail("This Vehicle ID or registration already exists.");
+    db.vehicles.push({ vehicle_id: vid, ...c, active: 1 }); save();
+    return ok(`Vehicle ${vid} added.`);
+  }
+  function updateVehicle(vid, d) {
+    const v = db.vehicles.find(x => x.vehicle_id === vid); if (!v) return fail("Vehicle not found.");
+    const [c, err] = cleanVehicle(d); if (err) return fail(err);
+    if (db.vehicles.some(x => x.vehicle_id !== vid && x.registration.toLowerCase() === c.registration.toLowerCase())) return fail("Another vehicle already has this registration.");
+    Object.assign(v, c, { active: d.active ? 1 : 0 }); save();
+    return ok(`Vehicle ${vid} updated.`);
+  }
+  function setActive(vid, active) {
+    const v = db.vehicles.find(x => x.vehicle_id === vid); if (!v) return fail("Vehicle not found.");
+    v.active = active ? 1 : 0; save();
+    return ok(`Vehicle ${vid} is now ${active ? "active" : "inactive (its history is kept)"}.`);
+  }
+
+  // ---------------------------------------------------------------- maintenance and other expenses
+  function addMaintenance(d) {
+    if (!db.vehicles.some(v => v.vehicle_id === d.vehicle_id)) return fail("Choose a vehicle from the list.");
+    if (!isDate(d.date)) return fail("Choose a valid date.");
+    if (d.date > today()) return fail("Date cannot be in the future.");
+    if (!CATEGORIES.includes(d.category)) return fail("Choose a category from the list.");
+    const cost = num(d.cost); if (cost === null || cost < 0) return fail("Cost must be a number (0 or more).");
+    const odo = num(d.odometer);
+    if (d.odometer !== null && d.odometer !== undefined && String(d.odometer).trim() !== "" && (odo === null || odo < 0 || !Number.isInteger(odo))) return fail("Odometer must be a whole number of km, or left empty.");
+    const desc = String(d.description || "").trim().slice(0, 120);
+    if (db.maint.some(m => m.vehicle_id === d.vehicle_id && m.maint_date === d.date && m.category === d.category && m.description === desc && m.cost === cost)) return fail("The same expense is already recorded.");
+    db.maint.push({ maint_id: db.nextMaint++, vehicle_id: d.vehicle_id, maint_date: d.date, category: d.category, description: desc, cost, odometer_km: odo, notes: String(d.notes || "").trim().slice(0, 300) }); save();
+    return ok(`${d.category} expense of ${fmt(cost)} saved.`);
+  }
+  function deleteMaintenance(id) {
+    const n = db.maint.length; db.maint = db.maint.filter(m => m.maint_id !== id); save();
+    return db.maint.length < n ? ok("Expense deleted.") : fail("Record not found.");
+  }
+
+  // ---------------------------------------------------------------- request router (same addresses as a server would have)
+  function handle(method, url, body) {
+    const u = new URL(url, "http://local"), p = u.pathname, q = u.searchParams, d = body || {};
+    const start = isDate(q.get("start")) ? q.get("start") : null, end = isDate(q.get("end")) ? q.get("end") : null, ids = q.getAll("vehicle").filter(Boolean);
+    let m;
+    if (p === "/api/meta") return { fuel_types: FUEL_TYPES, categories: CATEGORIES, today: today(), limits: { max_plausible_km: MAX_PLAUSIBLE_KM, max_litres: MAX_LITRES }, settings: S };
+    if (p === "/api/counts") return { vehicles: db.vehicles.length, fuel_log: db.fuel.length, maintenance: db.maint.length };
+
+    if (p === "/api/vehicles" && method === "GET") {
+      const fuel = fuelFrame(), latest = latestReadings(fuel);
+      return [...db.vehicles].sort(byKey("vehicle_id")).map(v => ({ ...v, last_odometer: latest[v.vehicle_id] ? latest[v.vehicle_id].km : null,
+        last_fill: latest[v.vehicle_id] ? latest[v.vehicle_id].at : null, fills: fuel.filter(r => r.vehicle_id === v.vehicle_id).length }));
+    }
+    if (p === "/api/vehicles" && method === "POST") return addVehicle(d);
+    if ((m = p.match(/^\/api\/vehicles\/([^/]+)\/active$/)) && method === "POST") return setActive(decodeURIComponent(m[1]), !!d.active);
+    if ((m = p.match(/^\/api\/vehicles\/([^/]+)$/)) && method === "PUT") return updateVehicle(decodeURIComponent(m[1]), d);
+
+    if (p === "/api/fuel" && method === "GET") {
+      let rows = filterFuel(fuelFrame(), start, end, ids);
+      if (q.get("flagged") === "1") rows = rows.filter(r => r.data_check !== "OK" || r.alert !== "");
+      rows.sort((a, b) => -byKey("fill_datetime", "fill_id")(a, b));
+      const limit = Math.max(1, Math.min(Number(q.get("limit")) || 500, 2000));
+      return { total: rows.length, rows: rows.slice(0, limit) };
+    }
+    if (p === "/api/fuel" && method === "POST") return addFill(d);
+    if ((m = p.match(/^\/api\/fuel\/(\d+)$/))) return method === "PUT" ? updateFill(Number(m[1]), d) : method === "DELETE" ? deleteFill(Number(m[1])) : fail("Not found.");
+
+    if (p === "/api/maintenance" && method === "GET") {
+      const rows = filterMaint(maintFrame(), start, end, ids, q.get("category") || null), by = {};
+      rows.forEach(r => { by[r.category] = (by[r.category] || 0) + r.cost; });
+      return { rows, total: rows.reduce((t, r) => t + r.cost, 0), by_category: by };
+    }
+    if (p === "/api/maintenance" && method === "POST") return addMaintenance(d);
+    if ((m = p.match(/^\/api\/maintenance\/(\d+)$/)) && method === "DELETE") return deleteMaintenance(Number(m[1]));
+
+    if (p === "/api/dashboard") {
+      const veh = [...db.vehicles].sort(byKey("vehicle_id")), fuelAll = fuelFrame(), maintAll = maintFrame();
+      const sel = ids.filter(i => veh.some(v => v.vehicle_id === i));
+      const fuel = filterFuel(fuelAll, start, end, sel), maint = filterMaint(maintAll, start, end, sel);
+      const summary = vehicleSummary(fuel, maint, sel.length ? veh.filter(v => sel.includes(v.vehicle_id)) : veh);
+      const dates = fuelAll.map(r => r.fill_date).sort();
+      return { kpis: kpis(fuel, maint, summary), summary, trend: monthlyTrend(fuel, maint),
+               attention: fuel.filter(r => r.data_check !== "OK" || r.alert !== "").sort((a, b) => -byKey("fill_datetime", "fill_id")(a, b)).slice(0, 8),
+               span: { first: dates[0] || null, last: dates[dates.length - 1] || null } };
+    }
+    return fail("Not found.");
+  }
+
+  // ---------------------------------------------------------------- export, reset
+  const csvCell = v => { const s = v === null || v === undefined ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const toCsv = (head, rows) => [head.join(","), ...rows.map(r => r.map(csvCell).join(","))].join("\r\n");
+  const r2 = v => (v === null ? "" : Math.round(v * 100) / 100);
+  function fuelCsv() {
+    const rows = fuelFrame().sort(byKey("fill_datetime", "vehicle_id"));
+    return toCsv(["Date and time", "Vehicle", "Registration", "Driver", "Odometer (km)", "Litres", "Price per litre", "Total cost (calculated)", "Receipt total", "Receipt check", "Km driven", "Km per litre", "Cost per km", "Station", "Data check", "Alert"],
+      rows.map(r => [r.fill_datetime, r.vehicle_id, r.registration, r.driver, r.odometer_km, r.litres, r.price_per_litre, r2(r.total_cost), r.receipt_total, r.receipt_check, r.km_driven, r2(r.km_per_litre), r2(r.cost_per_km), r.station, r.data_check, r.alert]));
+  }
+  function maintCsv() {
+    return toCsv(["Date", "Vehicle", "Registration", "Category", "Description", "Cost", "Odometer (km)", "Notes"],
+      maintFrame().map(m => [m.maint_date, m.vehicle_id, m.registration, m.category, m.description, m.cost, m.odometer_km, m.notes]));
+  }
+  function summaryCsv() {
+    const fuel = fuelFrame(), maint = maintFrame();
+    return toCsv(["Vehicle", "Registration", "Make / model", "Driver", "Active", "Refuellings", "Litres", "Fuel cost", "Km (valid)", "Km per litre", "Cost per km", "Maintenance", "Total running cost"],
+      vehicleSummary(fuel, maint, [...db.vehicles].sort(byKey("vehicle_id"))).map(s => [s.vehicle_id, s.registration, s.make_model, s.driver, s.active ? "yes" : "no", s.fills, r2(s.litres), r2(s.fuel_cost), s.valid_km, r2(s.km_per_litre), r2(s.cost_per_km), r2(s.maintenance), r2(s.running_cost)]));
+  }
+  function reset(empty) {
+    db = empty ? { vehicles: [], fuel: [], maint: [], nextFill: 1, nextMaint: 1 } : seed(); save();
+    return ok(empty ? "All data deleted." : "Demo data restored.");
+  }
+  return { handle, fuelCsv, maintCsv, summaryCsv, reset };
+})();
+
+</script>
+<script>
+/* Fleet Fuel Manager - screens. app.js draws the screens and sends what the user types to store.js,
+   which holds the data and does all rules and calculations. */
+"use strict";
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = (v, d = 0) => (v === null || v === undefined || Number.isNaN(v)) ? "-" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const when = s => { if (!s) return "-"; const [d, t] = s.split(" "); const dt = new Date(d + "T00:00"); return dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + (t ? ", " + t : ""); };
+const dayOnly = s => when(s).split(",")[0] + (s && s.includes(" ") ? "" : "");
+
+const state = { meta: null, vehicles: [], editFill: null, editVeh: null, odoVehicle: null, fuelRows: new Map() };
+
+// ---------------------------------------------------------------- data calls
+// There is no server in this version: store.js keeps the data in the browser and answers like a server would.
+async function api(url, opts = {}) { return Store.handle(opts.method || "GET", url, opts.json); }
+const qs = params => { const u = new URLSearchParams(); for (const [k, v] of params) if (v !== "" && v !== null && v !== undefined) u.append(k, v); const s = u.toString(); return s ? "?" + s : ""; };
+function formParams(form) {
+  const fd = new FormData(form), out = [];
+  for (const [k, v] of fd.entries()) out.push([k, v]);
+  return out;
+}
+
+let toastTimer;
+function toast(msg, isErr) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (isErr ? " err" : "");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3600);
+}
+
+// ---------------------------------------------------------------- navigation
+const loaders = {};
+function show(view) {
+  if (!$("#view-" + view)) view = "dashboard";
+  $$(".view").forEach(v => v.hidden = v.id !== "view-" + view);
+  $$(".tab").forEach(t => t.classList.toggle("is-active", t.dataset.view === view));
+  if (location.hash !== "#" + view) history.replaceState(null, "", "#" + view);
+  loaders[view] && loaders[view]();
+}
+$$(".tab").forEach(t => t.addEventListener("click", () => show(t.dataset.view)));
+$$("dialog [data-close]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
+$$("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+
+async function loadVehicles() { state.vehicles = await api("/api/vehicles"); return state.vehicles; }
+function fillVehicleSelect(sel, { all = false, activeOnly = false, keep = true } = {}) {
+  const old = sel.value;
+  const list = activeOnly ? state.vehicles.filter(v => v.active) : state.vehicles;
+  sel.innerHTML = (all ? '<option value="">All vehicles</option>' : "") +
+    list.map(v => `<option value="${esc(v.vehicle_id)}">${esc(v.vehicle_id)} - ${esc(v.registration)}${v.active ? "" : " (inactive)"}</option>`).join("");
+  if (keep && [...sel.options].some(o => o.value === old)) sel.value = old;
+}
+
+// ---------------------------------------------------------------- charts (drawn as SVG)
+function niceMax(v) { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+const short = v => v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + "k" : String(Math.round(v * 10) / 10);
+const CH = { W: 560, H: 270, l: 46, r: 12, t: 22, b: 34 };
+
+function frame(max, ticks = 4) {
+  const { W, H, l, r, t, b } = CH; const ph = H - t - b; let g = "";
+  for (let i = 0; i <= ticks; i++) {
+    const y = t + ph - (ph * i) / ticks;
+    g += `<line class="grid" x1="${l}" x2="${W - r}" y1="${y}" y2="${y}"/><text class="axis" x="${l - 6}" y="${y + 4}" text-anchor="end">${short(max * i / ticks)}</text>`;
+  }
+  return g;
+}
+const emptyChart = msg => `<svg viewBox="0 0 ${CH.W} 160" role="img"><text class="empty" x="${CH.W / 2}" y="80">${esc(msg)}</text></svg>`;
+
+function barChart(el, items, { fmtVal = v => num(v, 1), unit = "" } = {}) {
+  const known = items.filter(i => i.value !== null && i.value !== undefined);
+  if (!items.length || !known.length) { el.innerHTML = emptyChart("No valid intervals in this selection"); return; }
+  const { W, H, l, r, t, b } = CH, max = niceMax(Math.max(...known.map(i => i.value)) * 1.08), ph = H - t - b, bw = (W - l - r) / items.length;
+  let s = frame(max);
+  items.forEach((it, i) => {
+    const x = l + i * bw, w = Math.min(bw * .6, 56), cx = x + bw / 2;
+    if (it.value === null || it.value === undefined) { s += `<text class="axis" x="${cx}" y="${t + ph - 6}" text-anchor="middle">n/a</text>`; }
+    else {
+      const h = ph * it.value / max;
+      s += `<rect class="bar-rect" x="${cx - w / 2}" y="${t + ph - h}" width="${w}" height="${h}" rx="5" style="fill:${it.color || "var(--bar)"}"><title>${esc(it.label)}: ${fmtVal(it.value)} ${unit}</title></rect>`;
+      s += `<text class="val" x="${cx}" y="${t + ph - h - 6}">${fmtVal(it.value)}</text>`;
+    }
+    s += `<text class="xl" x="${cx}" y="${H - 12}">${esc(it.label)}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img">${s}</svg>`;
+}
+
+function stackedChart(el, items) {
+  if (!items.length || !items.some(i => i.a + i.b > 0)) { el.innerHTML = emptyChart("No costs in this selection"); return; }
+  const { W, H, l, r, t, b } = CH, max = niceMax(Math.max(...items.map(i => i.a + i.b)) * 1.08), ph = H - t - b, bw = (W - l - r) / items.length;
+  let s = frame(max);
+  items.forEach((it, i) => {
+    const cx = l + i * bw + bw / 2, w = Math.min(bw * .6, 56), ha = ph * it.a / max, hb = ph * it.b / max;
+    s += `<rect class="bar-rect" x="${cx - w / 2}" y="${t + ph - ha}" width="${w}" height="${ha}" style="fill:var(--fuel)"><title>${esc(it.label)} fuel: ${num(it.a)}</title></rect>`;
+    if (hb > 0) s += `<rect class="bar-rect" x="${cx - w / 2}" y="${t + ph - ha - hb}" width="${w}" height="${hb}" rx="4" style="fill:var(--maint)"><title>${esc(it.label)} maintenance: ${num(it.b)}</title></rect>`;
+    s += `<text class="val" x="${cx}" y="${t + ph - ha - hb - 6}">${short(it.a + it.b)}</text><text class="xl" x="${cx}" y="${H - 12}">${esc(it.label)}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img">${s}</svg>`;
+}
+
+function lineChart(el, labels, series) {
+  if (!labels.length) { el.innerHTML = emptyChart("No records in this selection"); return; }
+  const { W, H, l, r, t, b } = CH, all = series.flatMap(s => s.values), max = niceMax(Math.max(...all, 1) * 1.08), ph = H - t - b;
+  const step = labels.length > 1 ? (W - l - r - 20) / (labels.length - 1) : 0, x = i => l + 10 + i * step, y = v => t + ph - ph * v / max;
+  let s = frame(max);
+  labels.forEach((lb, i) => { s += `<text class="xl" x="${labels.length > 1 ? x(i) : (W + l) / 2}" y="${H - 12}">${esc(lb)}</text>`; });
+  series.forEach(se => {
+    const pts = se.values.map((v, i) => [labels.length > 1 ? x(i) : (W + l) / 2, y(v)]);
+    s += `<polyline fill="none" stroke="${se.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" ${se.dash ? 'stroke-dasharray="7 5"' : ""} points="${pts.map(p => p.join(",")).join(" ")}"/>`;
+    pts.forEach((p, i) => { s += `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#fff" stroke="${se.color}" stroke-width="2.5"><title>${esc(labels[i])} - ${esc(se.name)}: ${num(se.values[i])}</title></circle>`; });
+    if (se.labelPoints) pts.forEach((p, i) => { s += `<text class="val" x="${p[0]}" y="${p[1] - 10}">${short(se.values[i])}</text>`; });
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img">${s}</svg>`;
+}
+
+// ---------------------------------------------------------------- DASHBOARD
+const dashForm = $("#dashFilters");
+function dashQuery() {
+  const p = [["start", dashForm.start.value], ["end", dashForm.end.value]];
+  $$("#dashVehicles input:checked").forEach(c => p.push(["vehicle", c.value]));
+  return qs(p);
+}
+function buildChips() {
+  const checked = new Set($$("#dashVehicles input:checked").map(c => c.value));
+  $("#dashVehicles").innerHTML = state.vehicles.map(v =>
+    `<label class="chip"><input type="checkbox" value="${esc(v.vehicle_id)}" ${checked.has(v.vehicle_id) ? "checked" : ""}><span>${esc(v.vehicle_id)}${v.active ? "" : " (inactive)"}</span></label>`).join("");
+}
+$("#dashClear").onclick = () => { dashForm.reset(); $$("#dashVehicles input").forEach(c => c.checked = false); loaders.dashboard(); };
+dashForm.addEventListener("change", () => loaders.dashboard());
+
+loaders.dashboard = async function () {
+  if (!state.vehicles.length) await loadVehicles();
+  if (!$("#dashVehicles").children.length) buildChips();
+  const counts = await api("/api/counts"); $("#emptyBanner").hidden = counts.vehicles > 0 && counts.fuel_log > 0;
+  const d = await api("/api/dashboard" + dashQuery());
+  const k = d.kpis, vlabel = id => { const v = state.vehicles.find(x => x.vehicle_id === id); return v ? `${id} - ${v.make_model || v.registration}` : id; };
+  $("#dashPeriod").textContent = d.span.first ? `Data available: ${when(d.span.first)} to ${when(d.span.last)}. Fuel economy and cost per km use valid intervals only (the first refuelling of each vehicle is a starting point).` : "No refuelling records yet.";
+  $("#kpis").innerHTML = [
+    ["Total km served", num(k.total_km), "valid intervals"], ["Fuel consumed", num(k.litres, 1) + " L", `avg ${num(k.km_per_litre, 2)} km/L`],
+    ["Fuel expenditure", num(k.fuel_cost), "calculated: litres × price"], ["Overall cost per km", num(k.cost_per_km, 2), "fuel cost ÷ km"],
+    ["Maintenance & other", num(k.maintenance), "separate category"], ["Records to check", `${k.flagged} / ${k.alerts}`, "data problems / alerts"]
+  ].map(([a, b, c]) => `<div class="kpi"><small>${a}</small><b>${b}</b><i>${c}</i></div>`).join("");
+  $("#spotlight").innerHTML = [
+    ["best", "🏆", "Most economical", k.best, v => `${num(v, 2)} km per litre`], ["worst", "⚠️", "Least economical", k.worst, v => `${num(v, 2)} km per litre`],
+    ["top", "⛽", "Highest fuel consumer", k.top, v => `${num(v, 1)} litres in total`]
+  ].map(([cls, ico, title, o, f]) => `<div class="spot ${cls}"><div class="ico">${ico}</div><div><small>${title}</small><b>${o ? esc(vlabel(o.value === undefined ? "" : o.vehicle_id)) : "Not enough data"}</b><span>${o ? f(o.value) : "Needs at least two refuellings"}</span></div></div>`).join("");
+
+  barChart($("#chEco"), d.summary.map(s => ({ label: s.vehicle_id, value: s.km_per_litre, color: k.best && s.vehicle_id === k.best.vehicle_id ? "var(--best)" : (k.worst && s.vehicle_id === k.worst.vehicle_id && k.worst.vehicle_id !== k.best.vehicle_id) ? "var(--worst)" : "var(--bar)" })), { fmtVal: v => num(v, 1), unit: "km/L" });
+  const cp = d.summary.map(s => s.cost_per_km).filter(v => v !== null), lo = Math.min(...cp), hi = Math.max(...cp);
+  barChart($("#chCpk"), d.summary.map(s => ({ label: s.vehicle_id, value: s.cost_per_km, color: s.cost_per_km !== null && s.cost_per_km === lo && lo !== hi ? "var(--best)" : s.cost_per_km !== null && s.cost_per_km === hi && lo !== hi ? "var(--worst)" : "var(--bar)" })), { fmtVal: v => num(v, 1), unit: "per km" });
+  stackedChart($("#chRun"), d.summary.map(s => ({ label: s.vehicle_id, a: s.fuel_cost, b: s.maintenance })));
+  lineChart($("#chTrend"), d.trend.map(t => t.label), [
+    { name: "Fuel cost", values: d.trend.map(t => t.fuel_cost), color: "var(--fuel)", labelPoints: true },
+    { name: "Maintenance", values: d.trend.map(t => t.maintenance), color: "var(--maint)", dash: true }]);
+  $("#lgTrend").innerHTML = '<span><i style="background:var(--fuel)"></i>Fuel cost</span><span><i style="background:var(--maint)"></i>Maintenance and other</span>';
+  $("#lgRun").innerHTML = '<span><i style="background:var(--fuel)"></i>Fuel</span><span><i style="background:var(--maint)"></i>Maintenance and other</span>';
+
+  $("#summaryTable").innerHTML = `<thead><tr><th class="l">Vehicle</th><th class="l">Driver</th><th>Refuellings</th><th>Km (valid)</th><th>Litres</th><th>Fuel cost</th><th>Km/L</th><th>Cost/km</th><th>Maintenance</th><th>Total running cost</th></tr></thead><tbody>` +
+    d.summary.map(s => `<tr class="${s.active ? "" : "inactive"}"><td class="l"><b>${esc(s.vehicle_id)}</b> <span class="muted">${esc(s.make_model)}</span></td><td class="l">${esc(s.driver) || "-"}</td><td>${s.fills}</td><td>${num(s.valid_km)}</td><td>${num(s.litres, 1)}</td><td>${num(s.fuel_cost)}</td><td>${num(s.km_per_litre, 2)}</td><td>${num(s.cost_per_km, 2)}</td><td>${num(s.maintenance)}</td><td><b>${num(s.running_cost)}</b></td></tr>`).join("") + "</tbody>";
+  $("#attention").innerHTML = d.attention.length ? fuelTable(d.attention, false) : '<div class="empty-note">Nothing to check in this selection.</div>';
+};
+
+$("#loadDemo").onclick = () => { Store.reset(false); state.vehicles = []; $("#dashVehicles").innerHTML = ""; state.odoVehicle = null; loaders.dashboard(); };
+
+// ---------------------------------------------------------------- ODOMETER
+const DIGITS = 6, odoEl = $("#odometer"), strips = [];
+for (let i = 0; i < DIGITS; i++) {
+  const d = document.createElement("div"); d.className = "digit" + (i === DIGITS - 1 ? " last" : "");
+  const s = document.createElement("div"); s.className = "strip";
+  for (let n = 0; n <= 9; n++) { const sp = document.createElement("span"); sp.textContent = n; s.appendChild(sp); }
+  d.appendChild(s); odoEl.appendChild(d); strips.push(s);
+}
+function showKm(km) {
+  const t = String(Math.max(0, Math.min(10 ** DIGITS - 1, Math.floor(km || 0)))).padStart(DIGITS, "0");
+  strips.forEach((s, i) => s.style.transform = `translateY(${-Number(t[i]) * 10}%)`);   // strip = digits 0-9; 10% of its height = one digit
+}
+const GAUGE_MAX = 20, ANGLE = 125;
+(function drawTicks() {
+  let s = "";
+  for (let v = 0; v <= GAUGE_MAX; v += 5) {
+    const a = (-ANGLE + (v / GAUGE_MAX) * 2 * ANGLE) * Math.PI / 180, x = 150 + 138 * Math.sin(a), y = 150 - 138 * Math.cos(a);
+    s += `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}">${v}</text>`;
+  }
+  $("#gaugeTicks").innerHTML = s;
+})();
+function showGauge(kmpl) {
+  const v = kmpl === null || kmpl === undefined ? 0 : Math.min(kmpl, GAUGE_MAX);
+  $("#gaugeNeedle").style.transform = `rotate(${-ANGLE + (v / GAUGE_MAX) * 2 * ANGLE}deg)`;
+  $("#gaugeFill").setAttribute("stroke-dasharray", `${(v / GAUGE_MAX) * 100} 100`);
+  $("#gaugeVal").textContent = kmpl === null || kmpl === undefined ? "n/a" : num(kmpl, 1);
+}
+$("#odoVehicle").onchange = e => { state.odoVehicle = e.target.value; loaders.odometer(true); };
+
+loaders.odometer = async function (rolling) {
+  await loadVehicles();
+  const sel = $("#odoVehicle");
+  if (!state.odoVehicle || !state.vehicles.some(v => v.vehicle_id === state.odoVehicle)) state.odoVehicle = (state.vehicles.find(v => v.last_odometer !== null) || state.vehicles[0] || {}).vehicle_id;
+  fillVehicleSelect(sel, { keep: false }); sel.value = state.odoVehicle || "";
+  const v = state.vehicles.find(x => x.vehicle_id === state.odoVehicle);
+  if (!v) { $("#odoMeta").textContent = "No vehicles yet."; showKm(0); showGauge(null); return; }
+  $("#odoMeta").innerHTML = `<span>Registration <b>${esc(v.registration)}</b></span><span>Driver <b>${esc(v.driver) || "-"}</b></span><span>Model <b>${esc(v.make_model) || "-"}</b></span><span>Last reading <b>${when(v.last_fill)}</b></span>`;
+  $("#odoNote").textContent = v.last_odometer === null ? "No refuelling recorded yet, so no odometer reading." : v.last_odometer > 999999 ? "Reading is above 999,999 km: the display shows the last six digits." : `Latest reading from the fuel log (${v.fills} refuelling${v.fills === 1 ? "" : "s"}).`;
+  if (!rolling) showKm(0);
+  requestAnimationFrame(() => requestAnimationFrame(() => showKm((v.last_odometer || 0) % 10 ** DIGITS)));
+  $("#odoAll").innerHTML = state.vehicles.map(x => `<button class="mini ${x.vehicle_id === v.vehicle_id ? "is-on" : ""}" data-v="${esc(x.vehicle_id)}"><div><b>${esc(x.vehicle_id)} · ${esc(x.registration)}</b><span>${esc(x.driver) || "-"} · ${x.last_fill ? when(x.last_fill) : "no refuelling yet"}</span></div><div class="km">${x.last_odometer === null ? "------" : String(x.last_odometer % 10 ** DIGITS).padStart(DIGITS, "0")}</div></button>`).join("");
+  $$("#odoAll .mini").forEach(b => b.onclick = () => { state.odoVehicle = b.dataset.v; window.scrollTo({ top: 0, behavior: "smooth" }); loaders.odometer(true); });
+  const dash = await api("/api/dashboard" + qs([["vehicle", v.vehicle_id]]));
+  requestAnimationFrame(() => requestAnimationFrame(() => showGauge(dash.summary[0] ? dash.summary[0].km_per_litre : null)));
+  const f = await api("/api/fuel" + qs([["vehicle", v.vehicle_id], ["limit", 6]]));
+  $("#odoRecent").innerHTML = f.rows.length ? `<table><thead><tr><th class="l">Date and time</th><th>Odometer</th><th>Litres</th><th>Km driven</th><th>Km/L</th></tr></thead><tbody>${f.rows.map(r => `<tr><td class="l">${when(r.fill_datetime)}</td><td>${num(r.odometer_km)}</td><td>${num(r.litres, 1)}</td><td>${r.km_driven === null ? '<span class="badge mute">first record</span>' : num(r.km_driven)}</td><td>${num(r.km_per_litre, 2)}</td></tr>`).join("")}</tbody></table>` : '<div class="empty-note">No refuellings for this vehicle.</div>';
+};
+
+// ---------------------------------------------------------------- FUEL LOG
+const fuelForm = $("#fuelFilters");
+function fuelTable(rows, actions = true) {
+  rows.forEach(r => state.fuelRows.set(r.fill_id, r));
+  const checkBadge = r => r.data_check !== "OK" ? `<span class="badge bad" title="${esc(r.data_check)}">${esc(r.data_check)}</span>` : (r.alert ? `<span class="badge warn">${esc(r.alert)}</span>` : '<span class="badge ok">OK</span>');
+  const receipt = r => r.receipt_total === null ? '<span class="badge mute">no receipt</span>' : `${num(r.receipt_total, 2)} <span class="badge ${r.receipt_check === "OK" ? "ok" : "bad"}">${r.receipt_check === "OK" ? "matches" : "mismatch"}</span>`;
+  return `<table><thead><tr><th class="l">Date and time</th><th class="l">Vehicle</th><th class="l">Driver</th><th>Odometer</th><th>Litres</th><th>Price/L</th><th>Total (calc.)</th><th>Receipt</th><th>Km driven</th><th>Km/L</th><th>Cost/km</th><th class="l">Check</th>${actions ? "<th></th>" : ""}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="l">${when(r.fill_datetime)}</td><td class="l"><b>${esc(r.vehicle_id)}</b> <span class="muted">${esc(r.registration)}</span></td><td class="l">${esc(r.driver) || "-"}</td><td>${num(r.odometer_km)}</td><td>${num(r.litres, 2)}</td><td>${num(r.price_per_litre, 2)}</td><td><b>${num(r.total_cost, 2)}</b></td><td>${receipt(r)}</td>` +
+      (r.prev_odometer === null ? `<td colspan="3"><span class="badge info">first record: starting point, no km/L</span></td>` : `<td>${num(r.km_driven)}</td><td>${num(r.km_per_litre, 2)}</td><td>${num(r.cost_per_km, 2)}</td>`) +
+      `<td class="l">${checkBadge(r)}</td>${actions ? `<td><div class="acts"><button class="btn ghost small" data-edit="${r.fill_id}">Edit</button><button class="btn danger small" data-del="${r.fill_id}">Delete</button></div></td>` : ""}</tr>`).join("") + "</tbody></table>";
+}
+function fuelQuery() { return qs(formParams(fuelForm).concat([["limit", 500]])); }
+fuelForm.addEventListener("change", () => loaders.fuel());
+$("#fuelClear").onclick = () => { fuelForm.reset(); loaders.fuel(); };
+$("#fuelAdd").onclick = () => openFuelDialog(null);
+
+loaders.fuel = async function () {
+  await loadVehicles(); fillVehicleSelect(fuelForm.vehicle, { all: true });
+  const d = await api("/api/fuel" + fuelQuery());
+  $("#fuelCount").textContent = d.total ? `${d.total} record${d.total === 1 ? "" : "s"}${d.total > d.rows.length ? ` (newest ${d.rows.length} shown)` : ""}. Total cost = litres × price per litre; the receipt is only compared against it.` : "";
+  $("#fuelTable").innerHTML = d.rows.length ? fuelTable(d.rows) : '<div class="empty-note">No refuelling records match these filters.</div>';
+};
+$("#fuelTable").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
+  if (ed) openFuelDialog(state.fuelRows.get(Number(ed.dataset.edit)));
+  if (del && confirm("Delete this refuelling record? This cannot be undone.")) {
+    const r = await api("/api/fuel/" + del.dataset.del, { method: "DELETE" }); toast(r.message, !r.ok); loaders.fuel();
+  }
+});
+
+const fd = $("#fuelDialog"), ff = $("#fuelForm");
+function updateCalc() {
+  const l = parseFloat(ff.litres.value), p = parseFloat(ff.price.value), r = ff.receipt.value === "" ? null : parseFloat(ff.receipt.value);
+  let h = "Total cost = litres × price per litre: <b>-</b>";
+  if (l > 0 && p > 0) {
+    const t = l * p; h = `Total cost = litres × price per litre: <b>${num(t, 2)}</b>`;
+    if (r !== null && !Number.isNaN(r)) { const tol = Math.max(1, .005 * t), diff = r - t; h += Math.abs(diff) <= tol ? ' <span class="badge ok">receipt matches</span>' : ` <span class="badge bad">receipt differs by ${num(diff, 2)}</span>`; }
+  }
+  $("#fuelCalc").innerHTML = h;
+  const v = state.vehicles.find(x => x.vehicle_id === ff.vehicle_id.value);
+  $("#fuelLast").textContent = v && v.last_odometer !== null ? `Last recorded odometer for ${v.vehicle_id}: ${num(v.last_odometer)} km (${when(v.last_fill)}).` : "No previous reading: this will be the starting point (no km/L).";
+}
+["litres", "price", "receipt", "vehicle_id"].forEach(n => ff[n].addEventListener("input", updateCalc));
+async function openFuelDialog(row) {
+  await loadVehicles(); state.editFill = row;
+  fillVehicleSelect(ff.vehicle_id, { activeOnly: !row, keep: false });
+  ff.reset(); $("#fuelMsg").textContent = ""; $("#fuelMsg").className = "msgbox"; $("#fuelConfirmRow").hidden = true;
+  $("#fuelTitle").textContent = row ? "Edit refuelling" : "Record refuelling";
+  ff.vehicle_id.disabled = !!row;
+  if (row) {
+    const [d, t] = row.fill_datetime.split(" ");
+    ff.vehicle_id.value = row.vehicle_id; ff.date.value = d; ff.time.value = t; ff.odometer.value = row.odometer_km; ff.litres.value = row.litres;
+    ff.price.value = row.price_per_litre; ff.receipt.value = row.receipt_total ?? ""; ff.station.value = row.station;
+  } else {
+    const now = new Date(), p = n => String(n).padStart(2, "0");
+    ff.date.value = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`; ff.time.value = `${p(now.getHours())}:${p(now.getMinutes())}`;
+    if (fuelForm.vehicle.value) ff.vehicle_id.value = fuelForm.vehicle.value;
+  }
+  updateCalc(); fd.showModal();
+}
+ff.addEventListener("submit", async e => {
+  e.preventDefault();
+  const row = state.editFill, payload = {
+    vehicle_id: ff.vehicle_id.value, date: ff.date.value, time: ff.time.value, odometer: ff.odometer.value, litres: ff.litres.value,
+    price: ff.price.value, receipt: ff.receipt.value, station: ff.station.value, confirm: ff.confirm.checked };
+  const r = row ? await api("/api/fuel/" + row.fill_id, { method: "PUT", json: payload }) : await api("/api/fuel", { method: "POST", json: payload });
+  const box = $("#fuelMsg");
+  if (r.ok) { fd.close(); toast(r.message); loaders.fuel(); return; }
+  box.textContent = r.message; box.className = "msgbox" + (r.needs_confirm ? " warn" : "");
+  $("#fuelConfirmRow").hidden = !r.needs_confirm;
+});
+
+// ---------------------------------------------------------------- VEHICLES
+const vd = $("#vehDialog"), vf = $("#vehForm");
+loaders.vehicles = async function () {
+  await loadVehicles();
+  $("#vehTable").innerHTML = state.vehicles.length ? `<table><thead><tr><th class="l">ID</th><th class="l">Registration</th><th class="l">Make / model</th><th class="l">Type</th><th class="l">Fuel</th><th class="l">Driver</th><th>Refuellings</th><th>Odometer</th><th class="l">Status</th><th></th></tr></thead><tbody>` +
+    state.vehicles.map(v => `<tr class="${v.active ? "" : "inactive"}"><td class="l"><b>${esc(v.vehicle_id)}</b></td><td class="l">${esc(v.registration)}</td><td class="l">${esc(v.make_model) || "-"}</td><td class="l">${esc(v.vehicle_type) || "-"}</td><td class="l">${esc(v.fuel_type) || "-"}</td><td class="l">${esc(v.driver) || "-"}</td><td>${v.fills}</td><td>${v.last_odometer === null ? "-" : num(v.last_odometer)}</td><td class="l"><span class="badge ${v.active ? "ok" : "mute"}">${v.active ? "Active" : "Inactive"}</span></td><td><div class="acts"><button class="btn ghost small" data-vedit="${esc(v.vehicle_id)}">Edit</button><button class="btn ghost small" data-vtoggle="${esc(v.vehicle_id)}">${v.active ? "Deactivate" : "Activate"}</button></div></td></tr>`).join("") + "</tbody></table>" : '<div class="empty-note">No vehicles yet. Add the first one.</div>';
+};
+function openVehDialog(v) {
+  state.editVeh = v; vf.reset(); $("#vehMsg").textContent = "";
+  const fs = vf.fuel_type; fs.innerHTML = '<option value="">-</option>' + state.meta.fuel_types.map(t => `<option>${t}</option>`).join("");
+  $("#vehTitle").textContent = v ? `Edit vehicle ${v.vehicle_id}` : "Add vehicle";
+  vf.vehicle_id.disabled = !!v; $("#vehActiveRow").hidden = !v;
+  if (v) { for (const k of ["vehicle_id", "registration", "make_model", "vehicle_type", "fuel_type", "driver", "notes"]) vf[k].value = v[k] ?? ""; vf.active.checked = !!v.active; }
+  vd.showModal();
+}
+$("#vehAdd").onclick = () => openVehDialog(null);
+$("#vehTable").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-vedit]"), tg = e.target.closest("[data-vtoggle]");
+  if (ed) openVehDialog(state.vehicles.find(v => v.vehicle_id === ed.dataset.vedit));
+  if (tg) { const v = state.vehicles.find(x => x.vehicle_id === tg.dataset.vtoggle); const r = await api(`/api/vehicles/${encodeURIComponent(v.vehicle_id)}/active`, { method: "POST", json: { active: !v.active } }); toast(r.message, !r.ok); dashRefreshChips(); loaders.vehicles(); }
+});
+vf.addEventListener("submit", async e => {
+  e.preventDefault(); const v = state.editVeh;
+  const p = Object.fromEntries(["vehicle_id", "registration", "make_model", "vehicle_type", "fuel_type", "driver", "notes"].map(k => [k, vf[k].value])); p.active = vf.active.checked;
+  const r = v ? await api("/api/vehicles/" + encodeURIComponent(v.vehicle_id), { method: "PUT", json: p }) : await api("/api/vehicles", { method: "POST", json: p });
+  if (r.ok) { vd.close(); toast(r.message); dashRefreshChips(); loaders.vehicles(); } else { $("#vehMsg").textContent = r.message; $("#vehMsg").className = "msgbox"; }
+});
+async function dashRefreshChips() { await loadVehicles(); buildChips(); }
+
+// ---------------------------------------------------------------- MAINTENANCE
+const mainForm = $("#mainFilters"), md = $("#mainDialog"), mf = $("#mainForm");
+mainForm.addEventListener("change", () => loaders.maintenance());
+$("#mainClear").onclick = () => { mainForm.reset(); loaders.maintenance(); };
+$("#mainAdd").onclick = async () => {
+  await loadVehicles(); fillVehicleSelect(mf.vehicle_id, { keep: false }); mf.reset(); $("#mainMsg").textContent = "";
+  mf.category.innerHTML = state.meta.categories.map(c => `<option>${c}</option>`).join(""); mf.date.value = state.meta.today;
+  if (mainForm.vehicle.value) mf.vehicle_id.value = mainForm.vehicle.value; md.showModal();
+};
+loaders.maintenance = async function () {
+  await loadVehicles(); fillVehicleSelect(mainForm.vehicle, { all: true });
+  if (mainForm.category.options.length === 0) mainForm.category.innerHTML = '<option value="">All categories</option>' + state.meta.categories.map(c => `<option>${c}</option>`).join("");
+  const d = await api("/api/maintenance" + qs(formParams(mainForm)));
+  $("#mainKpis").innerHTML = `<div class="kpi"><small>Total in selection</small><b>${num(d.total)}</b><i>${d.rows.length} expense${d.rows.length === 1 ? "" : "s"}</i></div>` +
+    Object.entries(d.by_category).map(([c, v]) => `<div class="kpi"><small>${esc(c)}</small><b>${num(v)}</b></div>`).join("");
+  $("#mainTable").innerHTML = d.rows.length ? `<table><thead><tr><th class="l">Date</th><th class="l">Vehicle</th><th class="l">Category</th><th class="l">Description</th><th>Cost</th><th>Odometer</th><th class="l">Notes</th><th></th></tr></thead><tbody>` +
+    d.rows.map(r => `<tr><td class="l">${when(r.maint_date)}</td><td class="l"><b>${esc(r.vehicle_id)}</b> <span class="muted">${esc(r.registration)}</span></td><td class="l"><span class="badge info">${esc(r.category)}</span></td><td class="l">${esc(r.description)}</td><td><b>${num(r.cost, 2)}</b></td><td>${r.odometer_km === null ? "-" : num(r.odometer_km)}</td><td class="l">${esc(r.notes)}</td><td><button class="btn danger small" data-mdel="${r.maint_id}">Delete</button></td></tr>`).join("") + "</tbody></table>" : '<div class="empty-note">No expenses match these filters.</div>';
+};
+$("#mainTable").addEventListener("click", async e => {
+  const b = e.target.closest("[data-mdel]");
+  if (b && confirm("Delete this expense?")) { const r = await api("/api/maintenance/" + b.dataset.mdel, { method: "DELETE" }); toast(r.message, !r.ok); loaders.maintenance(); }
+});
+mf.addEventListener("submit", async e => {
+  e.preventDefault();
+  const p = { vehicle_id: mf.vehicle_id.value, date: mf.date.value, category: mf.category.value, description: mf.description.value, cost: mf.cost.value, odometer: mf.odometer.value, notes: mf.notes.value };
+  const r = await api("/api/maintenance", { method: "POST", json: p });
+  if (r.ok) { md.close(); toast(r.message); loaders.maintenance(); } else { $("#mainMsg").textContent = r.message; $("#mainMsg").className = "msgbox"; }
+});
+
+// ---------------------------------------------------------------- DATA
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + text], { type: type + ";charset=utf-8" }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+loaders.data = async function () {
+  const c = await api("/api/counts");
+  $("#dataCounts").textContent = `Stored in this browser now: ${c.vehicles} vehicles, ${c.fuel_log} refuellings, ${c.maintenance} maintenance records.`;
+};
+$("#exFuel").onclick = () => download("fuel_log.csv", Store.fuelCsv(), "text/csv");
+$("#exMaint").onclick = () => download("maintenance.csv", Store.maintCsv(), "text/csv");
+$("#exSummary").onclick = () => download("vehicle_summary.csv", Store.summaryCsv(), "text/csv");
+
+// ---------------------------------------------------------------- start
+(async function start() {
+  state.meta = await api("/api/meta"); await loadVehicles();
+  show(location.hash.slice(1) || "dashboard");
+})();
+
+</script>
+</body>
+</html>

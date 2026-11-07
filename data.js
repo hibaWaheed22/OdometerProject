@@ -1,0 +1,113 @@
+/* data.js - the demo data. Open this file in VS Code to read or change it.
+   The first time the page opens, these lists are copied into the browser's storage.
+   After that the browser's copy is used, so if you edit this file, open the app and press
+   Data & export -> "Reload demo data" to load your changes.
+
+   vehicles : vehicle_id, registration, make_model, vehicle_type, fuel_type, driver, notes, active (1 = active, 0 = inactive)
+   fuel     : vehicle_id, fill_datetime ("YYYY-MM-DD HH:MM"), odometer_km, litres, price_per_litre, receipt_total (or null), station, odometer_confirmed (0 or 1)
+   maint    : vehicle_id, maint_date ("YYYY-MM-DD"), category (Service, Tyres, Repair, Insurance, Other), description, cost, odometer_km (or null), notes
+   One record per line. Keep the commas and quotes exactly as they are. */
+
+const SEED = {
+  vehicles: [
+    {"vehicle_id": "V01", "registration": "ABC-101", "make_model": "Toyota Hiace", "vehicle_type": "Delivery van", "fuel_type": "Diesel", "driver": "Ahmed", "notes": "", "active": 1},
+    {"vehicle_id": "V02", "registration": "ABC-202", "make_model": "Suzuki Ravi", "vehicle_type": "Pickup", "fuel_type": "Petrol", "driver": "Bilal", "notes": "", "active": 1},
+    {"vehicle_id": "V03", "registration": "ABC-303", "make_model": "Hino 500", "vehicle_type": "Truck", "fuel_type": "Diesel", "driver": "Imran", "notes": "", "active": 1},
+    {"vehicle_id": "V04", "registration": "ABC-404", "make_model": "Toyota Corolla", "vehicle_type": "Sedan", "fuel_type": "Petrol", "driver": "Sara", "notes": "", "active": 1},
+    {"vehicle_id": "V05", "registration": "ABC-505", "make_model": "Suzuki Bolan", "vehicle_type": "Van", "fuel_type": "Petrol", "driver": "Usman", "notes": "", "active": 1},
+    {"vehicle_id": "V06", "registration": "ABC-606", "make_model": "Toyota Hilux", "vehicle_type": "Pickup", "fuel_type": "Diesel", "driver": "Hamza", "notes": "", "active": 1}
+  ],
+
+  fuel: [
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-03 18:30", "odometer_km": 62000, "litres": 41.8, "price_per_litre": 268.18, "receipt_total": 11210.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-16 12:50", "odometer_km": 62417, "litres": 47.8, "price_per_litre": 269.61, "receipt_total": 12887.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-06-25 17:50", "odometer_km": 62779, "litres": 41.7, "price_per_litre": 269.52, "receipt_total": 11239.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-07-08 15:50", "odometer_km": 63247, "litres": 49.7, "price_per_litre": 270.56, "receipt_total": 13447.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-07-21 08:10", "odometer_km": 63565, "litres": 35.2, "price_per_litre": 269.48, "receipt_total": 9486.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-02 08:50", "odometer_km": 63927, "litres": 39.9, "price_per_litre": 270.59, "receipt_total": 10797.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-14 12:40", "odometer_km": 64230, "litres": 35.1, "price_per_litre": 272.66, "receipt_total": 9570.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-08-25 07:40", "odometer_km": 64578, "litres": 39.7, "price_per_litre": 272.27, "receipt_total": 10809.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-06 07:50", "odometer_km": 64901, "litres": 36.6, "price_per_litre": 272.3, "receipt_total": 9966.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-16 17:30", "odometer_km": 65258, "litres": 38.1, "price_per_litre": 274.21, "receipt_total": 10447.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-09-25 09:00", "odometer_km": 65638, "litres": 43.5, "price_per_litre": 275.52, "receipt_total": 11985.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V01", "fill_datetime": "2026-10-06 08:10", "odometer_km": 65952, "litres": 35.2, "price_per_litre": 276.97, "receipt_total": 9749.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-04 08:50", "odometer_km": 61000, "litres": 28.7, "price_per_litre": 262.89, "receipt_total": 7545.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-16 12:50", "odometer_km": 61393, "litres": 34.1, "price_per_litre": 263.51, "receipt_total": 8986.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-06-25 18:40", "odometer_km": 61770, "litres": 32.7, "price_per_litre": 261.9, "receipt_total": 8564.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-04 17:40", "odometer_km": 62102, "litres": 30.5, "price_per_litre": 265.16, "receipt_total": 8087.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-13 18:40", "odometer_km": 62528, "litres": 39.9, "price_per_litre": 264.07, "receipt_total": 10536.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-07-24 17:10", "odometer_km": 62871, "litres": 32.6, "price_per_litre": 264.63, "receipt_total": 8627.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-06 15:30", "odometer_km": 63232, "litres": 32.4, "price_per_litre": 265.08, "receipt_total": 8589.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-18 18:40", "odometer_km": 63553, "litres": 30.2, "price_per_litre": 316.39, "receipt_total": 9555.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-08-28 17:30", "odometer_km": 63886, "litres": 29.9, "price_per_litre": 267.76, "receipt_total": 8006.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-09-10 15:20", "odometer_km": 64190, "litres": 28.9, "price_per_litre": 267.13, "receipt_total": 7720.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-09-22 09:40", "odometer_km": 64543, "litres": 31.1, "price_per_litre": 269.29, "receipt_total": 8375.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V02", "fill_datetime": "2026-10-01 15:40", "odometer_km": 64867, "litres": 29.5, "price_per_litre": 270.16, "receipt_total": 7970.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-05 17:00", "odometer_km": 57000, "litres": 68.7, "price_per_litre": 269.24, "receipt_total": 18497.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-16 09:20", "odometer_km": 57361, "litres": 74.1, "price_per_litre": 267.34, "receipt_total": 19810.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-06-25 17:50", "odometer_km": 57739, "litres": 72.8, "price_per_litre": 270.84, "receipt_total": 19717.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-08 17:20", "odometer_km": 58043, "litres": 63.9, "price_per_litre": 271.33, "receipt_total": 17338.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-17 09:20", "odometer_km": 58422, "litres": 79.2, "price_per_litre": 269.5, "receipt_total": 21344.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-07-26 17:50", "odometer_km": 58748, "litres": 65.0, "price_per_litre": 272.21, "receipt_total": 17694.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-06 18:30", "odometer_km": 59117, "litres": 72.5, "price_per_litre": 273.4, "receipt_total": 19822.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-18 15:00", "odometer_km": 59514, "litres": 78.5, "price_per_litre": 272.55, "receipt_total": 21395.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-08-27 12:50", "odometer_km": 59828, "litres": 94.8, "price_per_litre": 272.87, "receipt_total": 25868.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-08 12:40", "odometer_km": 60278, "litres": 88.2, "price_per_litre": 274.17, "receipt_total": 24182.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-21 12:00", "odometer_km": 60675, "litres": 83.3, "price_per_litre": 275.3, "receipt_total": 22932.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V03", "fill_datetime": "2026-09-30 09:00", "odometer_km": 61061, "litres": 76.4, "price_per_litre": 276.96, "receipt_total": 21160.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-06 15:10", "odometer_km": 68000, "litres": 33.4, "price_per_litre": 262.34, "receipt_total": 8762.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-18 09:10", "odometer_km": 68484, "litres": 38.2, "price_per_litre": 262.41, "receipt_total": 10024.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-06-28 09:10", "odometer_km": 69042, "litres": 43.4, "price_per_litre": 263.65, "receipt_total": 11442.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-08 17:00", "odometer_km": 69555, "litres": 38.2, "price_per_litre": 265.15, "receipt_total": 10129.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-18 18:30", "odometer_km": 69983, "litres": 33.0, "price_per_litre": 266.08, "receipt_total": 8781.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-07-31 15:30", "odometer_km": 70470, "litres": 38.2, "price_per_litre": 266.52, "receipt_total": 10181.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-08-09 17:50", "odometer_km": 71013, "litres": 42.7, "price_per_litre": 266.52, "receipt_total": 11380.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-08-22 17:10", "odometer_km": 71492, "litres": 36.3, "price_per_litre": 267.09, "receipt_total": 9695.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-03 18:10", "odometer_km": 71947, "litres": 34.1, "price_per_litre": 266.9, "receipt_total": 9101.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-12 18:20", "odometer_km": 72441, "litres": 37.5, "price_per_litre": 268.77, "receipt_total": 10079.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-09-22 07:30", "odometer_km": 72884, "litres": 34.2, "price_per_litre": 268.04, "receipt_total": 9167.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V04", "fill_datetime": "2026-10-02 15:40", "odometer_km": 73346, "litres": 34.6, "price_per_litre": 269.82, "receipt_total": 9336.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-06-07 08:00", "odometer_km": 83000, "litres": 33.4, "price_per_litre": 262.6, "receipt_total": 8771.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-06-19 07:30", "odometer_km": 83258, "litres": 25.9, "price_per_litre": 263.08, "receipt_total": 6814.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-01 18:50", "odometer_km": 83550, "litres": 27.9, "price_per_litre": 262.2, "receipt_total": 7315.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-11 09:40", "odometer_km": 83817, "litres": 27.0, "price_per_litre": 262.86, "receipt_total": 7097.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-07-22 07:00", "odometer_km": 84170, "litres": 34.1, "price_per_litre": 264.35, "receipt_total": 8113.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-02 07:10", "odometer_km": 84481, "litres": 30.3, "price_per_litre": 265.46, "receipt_total": 8043.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-14 18:10", "odometer_km": 84799, "litres": 32.9, "price_per_litre": 265.71, "receipt_total": 8742.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-08-24 17:50", "odometer_km": 85163, "litres": 35.0, "price_per_litre": 266.95, "receipt_total": 9343.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-05 12:40", "odometer_km": 85475, "litres": 30.6, "price_per_litre": 268.37, "receipt_total": 8212.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-18 15:20", "odometer_km": 85788, "litres": 31.2, "price_per_litre": 269.33, "receipt_total": 8403.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-09-30 09:10", "odometer_km": 86146, "litres": 34.5, "price_per_litre": 269.33, "receipt_total": 9292.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V05", "fill_datetime": "2026-10-13 07:40", "odometer_km": 86440, "litres": 29.7, "price_per_litre": 268.54, "receipt_total": 7976.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-06-08 12:40", "odometer_km": 40000, "litres": 68.9, "price_per_litre": 266.63, "receipt_total": 18371.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-06-20 12:30", "odometer_km": 40450, "litres": 58.2, "price_per_litre": 269.99, "receipt_total": 15713.0, "station": "Depot pump", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-01 18:30", "odometer_km": 40945, "litres": 61.9, "price_per_litre": 268.92, "receipt_total": 16646.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-10 08:50", "odometer_km": 41436, "litres": 60.6, "price_per_litre": 271.38, "receipt_total": 16446.0, "station": "Shell", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-19 09:50", "odometer_km": 41908, "litres": 60.7, "price_per_litre": 271.36, "receipt_total": 16472.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-07-29 07:40", "odometer_km": 42453, "litres": 70.9, "price_per_litre": 272.19, "receipt_total": 19298.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-08 17:30", "odometer_km": 43057, "litres": 72.8, "price_per_litre": 270.77, "receipt_total": 19712.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-21 15:10", "odometer_km": 43551, "litres": 60.9, "price_per_litre": 273.32, "receipt_total": 16645.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-08-31 08:20", "odometer_km": 44183, "litres": 78.0, "price_per_litre": 273.14, "receipt_total": 21305.0, "station": "Total", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-10 08:10", "odometer_km": 44697, "litres": 61.2, "price_per_litre": 275.46, "receipt_total": 16858.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-19 12:40", "odometer_km": 45175, "litres": 62.2, "price_per_litre": 276.0, "receipt_total": 17167.0, "station": "PSO", "odometer_confirmed": 0},
+    {"vehicle_id": "V06", "fill_datetime": "2026-09-29 08:40", "odometer_km": 45710, "litres": 65.7, "price_per_litre": 274.25, "receipt_total": 18018.0, "station": "Total", "odometer_confirmed": 0}
+  ],
+
+  maint: [
+    {"vehicle_id": "V01", "maint_date": "2026-06-20", "category": "Service", "description": "Oil and filter change", "cost": 9500.0, "odometer_km": 62600, "notes": ""},
+    {"vehicle_id": "V01", "maint_date": "2026-09-04", "category": "Insurance", "description": "Annual insurance", "cost": 45000.0, "odometer_km": 63700, "notes": ""},
+    {"vehicle_id": "V01", "maint_date": "2026-10-12", "category": "Repair", "description": "Battery replaced", "cost": 22000.0, "odometer_km": 64300, "notes": ""},
+    {"vehicle_id": "V02", "maint_date": "2026-07-28", "category": "Tyres", "description": "Two new rear tyres", "cost": 24000.0, "odometer_km": 61900, "notes": ""},
+    {"vehicle_id": "V02", "maint_date": "2026-09-18", "category": "Service", "description": "Oil change", "cost": 6000.0, "odometer_km": 63100, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-07-15", "category": "Service", "description": "Engine service", "cost": 32000.0, "odometer_km": 58200, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-09-11", "category": "Repair", "description": "Radiator hose", "cost": 14500.0, "odometer_km": 59300, "notes": ""},
+    {"vehicle_id": "V03", "maint_date": "2026-10-15", "category": "Insurance", "description": "Annual insurance", "cost": 120000.0, "odometer_km": 60500, "notes": ""},
+    {"vehicle_id": "V04", "maint_date": "2026-08-05", "category": "Service", "description": "Oil change", "cost": 6500.0, "odometer_km": 69100, "notes": ""},
+    {"vehicle_id": "V04", "maint_date": "2026-10-02", "category": "Other", "description": "Car wash and cleaning", "cost": 2500.0, "odometer_km": 70200, "notes": ""},
+    {"vehicle_id": "V05", "maint_date": "2026-08-19", "category": "Repair", "description": "Brake pads replaced", "cost": 11000.0, "odometer_km": 84300, "notes": ""},
+    {"vehicle_id": "V05", "maint_date": "2026-10-08", "category": "Service", "description": "Oil and filter change", "cost": 7800.0, "odometer_km": 85600, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-08-30", "category": "Service", "description": "Oil and filter change", "cost": 12500.0, "odometer_km": 41600, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-09-25", "category": "Tyres", "description": "Four new tyres", "cost": 96000.0, "odometer_km": 42800, "notes": ""},
+    {"vehicle_id": "V06", "maint_date": "2026-10-20", "category": "Repair", "description": "Clutch adjustment", "cost": 8500.0, "odometer_km": 44000, "notes": ""}
+  ]
+};

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet Fuel Manager</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='11' fill='%2322d3ee'/%3E%3Cpath d='M9 33A16 16 0 1 1 39 33' fill='none' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M24 12C24 12 17 20.5 17 25.5A7 7 0 0 0 31 25.5C31 20.5 24 12 24 12Z' fill='%2304121f'/%3E%3Cline x1='24' y1='36' x2='33' y2='25' stroke='%23fbbf24' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="38" height="38">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#bff3ff"/></linearGradient></defs>
+        <path d="M9 33 A16 16 0 1 1 39 33" fill="none" stroke="url(#lg)" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+        <path d="M24 12 C24 12 17 20.5 17 25.5 A7 7 0 0 0 31 25.5 C31 20.5 24 12 24 12 Z" fill="#04121f"/>
+        <path d="M22 26 A2.8 2.8 0 0 0 25 28.6" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="24" y1="36" x2="33" y2="25" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="24" cy="36" r="2.6" fill="#fbbf24"/>
+      </svg>
+    </span>
+    <div><h1>Fleet Fuel Manager</h1><p>Refuelling, odometer and running costs</p></div>
+  </div>
+  <nav aria-label="Main">
+    <button class="tab is-active" data-view="dashboard">Dashboard</button>
+    <button class="tab" data-view="odometer">Odometer</button>
+    <button class="tab" data-view="fuel">Fuel log</button>
+    <button class="tab" data-view="vehicles">Vehicles</button>
+    <button class="tab" data-view="maintenance">Maintenance</button>
+    <button class="tab" data-view="data">Data &amp; export</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ================= DASHBOARD ================= -->
+  <section id="view-dashboard" class="view">
+    <div class="card empty-banner" id="emptyBanner" hidden>
+      <h2>No data yet</h2>
+      <p class="sub">The app is empty. Load the demo data (6 vehicles, 72 refuellings) or start adding your own on the Vehicles tab.</p>
+      <button class="btn" id="loadDemo" type="button">Load demo data</button>
+    </div>
+    <form class="filters card" id="dashFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <div class="chips" id="dashVehicles" aria-label="Vehicles"></div>
+      <button type="button" class="btn ghost" id="dashClear">Clear filters</button>
+    </form>
+    <p class="period" id="dashPeriod"></p>
+
+    <div class="kpis" id="kpis"></div>
+    <div class="spotlight" id="spotlight"></div>
+
+    <div class="grid2">
+      <div class="card"><h2>Monthly cost trend</h2><p class="sub">Fuel cost and maintenance spending per month</p><div id="chTrend" class="chart"></div><div class="legend" id="lgTrend"></div></div>
+      <div class="card"><h2>Fuel economy by vehicle</h2><p class="sub">Kilometres per litre (higher is better)</p><div id="chEco" class="chart"></div></div>
+      <div class="card"><h2>Fuel cost per kilometre</h2><p class="sub">Rupees per km (lower is better)</p><div id="chCpk" class="chart"></div></div>
+      <div class="card"><h2>Running cost by vehicle</h2><p class="sub">Fuel plus maintenance and other expenses</p><div id="chRun" class="chart"></div><div class="legend" id="lgRun"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Vehicle comparison</h2>
+      <div class="tablewrap"><table id="summaryTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Needs attention</h2>
+      <p class="sub">Records with a data problem or an alert (latest first)</p>
+      <div class="tablewrap" id="attention"></div>
+    </div>
+  </section>
+
+  <!-- ================= ODOMETER ================= -->
+  <section id="view-odometer" class="view" hidden>
+    <div class="card odo-card">
+      <div class="odo-head">
+        <label>Vehicle <select id="odoVehicle"></select></label>
+        <div class="odo-meta" id="odoMeta"></div>
+      </div>
+      <div class="odo-body">
+        <div class="odo-stage">
+          <div class="odometer" id="odometer" aria-live="polite"></div><span class="unit">KM</span>
+        </div>
+        <div class="gauge-box">
+          <svg class="gauge" viewBox="0 0 300 250" role="img" aria-label="Average fuel economy gauge">
+            <defs><linearGradient id="gArc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>
+            <path class="track" d="M 45 215 A 120 120 0 1 1 255 215" pathLength="100"/>
+            <path class="fill" id="gaugeFill" d="M 45 215 A 120 120 0 1 1 255 215" pathLength="100" stroke-dasharray="0 100"/>
+            <g id="gaugeTicks"></g>
+            <g class="needle" id="gaugeNeedle" style="transform: rotate(-125deg)">
+              <line x1="150" y1="150" x2="150" y2="52" stroke="#fb7185" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="150" cy="150" r="9" fill="#0f172a" stroke="#fb7185" stroke-width="4"/><circle cx="150" cy="150" r="3" fill="#fff"/>
+            </g>
+            <text class="big" id="gaugeVal" x="150" y="196">-</text>
+            <text class="cap" x="150" y="214">KM PER LITRE (AVERAGE)</text>
+          </svg>
+        </div>
+      </div>
+      <p class="odo-note" id="odoNote"></p>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>Latest refuellings</h2><div class="tablewrap" id="odoRecent"></div></div>
+      <div class="card"><h2>All vehicles</h2><div class="minis" id="odoAll"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= FUEL LOG ================= -->
+  <section id="view-fuel" class="view" hidden>
+    <form class="filters card" id="fuelFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <label>Vehicle <select name="vehicle"></select></label>
+      <label class="check"><input type="checkbox" name="flagged" value="1"> Problems and alerts only</label>
+      <button type="button" class="btn ghost" id="fuelClear">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="fuelAdd">+ Record refuelling</button>
+    </form>
+    <div class="card">
+      <p class="sub" id="fuelCount"></p>
+      <div class="tablewrap tall" id="fuelTable"></div>
+    </div>
+  </section>
+
+  <!-- ================= VEHICLES ================= -->
+  <section id="view-vehicles" class="view" hidden>
+    <div class="bar"><h2>Fleet vehicles</h2><button class="btn" id="vehAdd">+ Add vehicle</button></div>
+    <div class="card"><div class="tablewrap" id="vehTable"></div></div>
+    <p class="hint">Deactivating a vehicle keeps its history but hides it from new refuelling entries.</p>
+  </section>
+
+  <!-- ================= MAINTENANCE ================= -->
+  <section id="view-maintenance" class="view" hidden>
+    <form class="filters card" id="mainFilters">
+      <label>From <input type="date" name="start"></label>
+      <label>To <input type="date" name="end"></label>
+      <label>Vehicle <select name="vehicle"></select></label>
+      <label>Category <select name="category"></select></label>
+      <button type="button" class="btn ghost" id="mainClear">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="mainAdd">+ Add expense</button>
+    </form>
+    <div class="kpis small" id="mainKpis"></div>
+    <div class="card"><div class="tablewrap" id="mainTable"></div></div>
+  </section>
+
+  <!-- ================= DATA ================= -->
+  <section id="view-data" class="view" hidden>
+    <div>
+      <div class="card">
+        <h2>Export</h2>
+        <p class="sub">Download the stored data. CSV files open in Excel.</p>
+        <div class="stack">
+          <button class="btn" id="exSummary" type="button">Vehicle summary (CSV)</button>
+          <button class="btn ghost" id="exFuel" type="button">Fuel log (CSV)</button>
+          <button class="btn ghost" id="exMaint" type="button">Maintenance (CSV)</button>
+        </div>
+        <p class="hint" id="dataCounts"></p>
+      </div>
+    </div>
+    <div class="card how">
+      <h2>How the numbers are calculated</h2>
+      <ul>
+        <li><b>Total cost</b> = litres × price per litre. The receipt total you type is only compared with it (difference above max(1, 0.5%) is flagged).</li>
+        <li><b>Distance</b> = this odometer reading − the previous reading of the same vehicle.</li>
+        <li><b>Fuel economy (km/L)</b> = distance ÷ litres, using the full-tank-to-full-tank method: fill the tank completely each time.</li>
+        <li><b>Cost per km</b> = total cost ÷ distance. Only valid intervals (distance above 0) count.</li>
+        <li>The <b>first record of each vehicle</b> is a starting point. It has no previous reading, so it shows no km/L and no cost per km.</li>
+        <li><b>Alerts:</b> km/L more than 15% below the vehicle's own average, or price per litre more than 10% above its own average.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<!-- ================= DIALOGS ================= -->
+<dialog id="fuelDialog">
+  <form id="fuelForm" novalidate>
+    <h2 id="fuelTitle">Record refuelling</h2>
+    <div class="fields">
+      <label class="wide">Vehicle <select name="vehicle_id" required></select></label>
+      <label>Date <input type="date" name="date" required></label>
+      <label>Time <input type="time" name="time" required></label>
+      <label>Odometer (km) <input type="number" name="odometer" min="0" step="1" inputmode="numeric" required></label>
+      <label>Litres <input type="number" name="litres" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Price per litre <input type="number" name="price" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Receipt total <small>(optional)</small> <input type="number" name="receipt" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="wide">Station <small>(optional)</small> <input type="text" name="station" maxlength="60"></label>
+    </div>
+    <div class="calc" id="fuelCalc"></div>
+    <p class="hintline" id="fuelLast"></p>
+    <label class="check confirm" id="fuelConfirmRow" hidden><input type="checkbox" name="confirm"> Confirm: save this reading even though it looks unusual</label>
+    <div class="msgbox" id="fuelMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="vehDialog">
+  <form id="vehForm" novalidate>
+    <h2 id="vehTitle">Add vehicle</h2>
+    <div class="fields">
+      <label>Vehicle ID <input name="vehicle_id" maxlength="12" placeholder="V07" required></label>
+      <label>Registration <input name="registration" maxlength="20" placeholder="ABC-707" required></label>
+      <label>Make / model <input name="make_model" maxlength="60"></label>
+      <label>Vehicle type <input name="vehicle_type" maxlength="40" placeholder="Van, pickup, truck"></label>
+      <label>Fuel type <select name="fuel_type"></select></label>
+      <label>Driver <input name="driver" maxlength="60"></label>
+      <label class="wide">Notes <input name="notes" maxlength="300"></label>
+      <label class="check wide" id="vehActiveRow"><input type="checkbox" name="active" checked> Active</label>
+    </div>
+    <div class="msgbox" id="vehMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="mainDialog">
+  <form id="mainForm" novalidate>
+    <h2>Add maintenance or other expense</h2>
+    <div class="fields">
+      <label class="wide">Vehicle <select name="vehicle_id" required></select></label>
+      <label>Date <input type="date" name="date" required></label>
+      <label>Category <select name="category" required></select></label>
+      <label class="wide">Description <input name="description" maxlength="120" placeholder="Oil and filter change"></label>
+      <label>Cost <input type="number" name="cost" min="0" step="0.01" inputmode="decimal" required></label>
+      <label>Odometer (km) <small>(optional)</small> <input type="number" name="odometer" min="0" step="1" inputmode="numeric"></label>
+      <label class="wide">Notes <input name="notes" maxlength="300"></label>
+    </div>
+    <div class="msgbox" id="mainMsg" role="alert"></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+<script src="drivers.js"></script>
+</body>
+</html>
